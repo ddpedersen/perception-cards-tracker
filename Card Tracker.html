@@ -1,0 +1,841 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perception Cards – Design Tracker</title>
+<style>
+  :root {
+    --bg: #0f0f13; --surface: #1a1a24; --surface2: #22222f; --border: #2e2e3e;
+    --text: #e8e8f0; --muted: #7a7a98; --accent: #6c63ff;
+    --green: #22c55e; --amber: #f59e0b; --blue: #3b82f6; --red: #ef4444; --purple: #a78bfa;
+    --cyan: #22d3ee; --orange: #fb923c;
+    --green-bg: #052e16; --amber-bg: #2d1a00; --blue-bg: #0c1f3f; --red-bg: #2d0b0b;
+    --cyan-bg: #062830; --orange-bg: #2d1500;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
+
+  /* ── Modal ── */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal-overlay.hidden { display: none; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 30px; max-width: 460px; width: 100%; }
+  .modal h2 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .modal p { font-size: 13px; color: var(--muted); line-height: 1.6; margin-bottom: 16px; }
+  .modal ol { font-size: 12px; color: var(--muted); line-height: 1.8; margin: 0 0 16px 18px; }
+  .modal ol li code { background: var(--surface2); color: var(--cyan); padding: 1px 5px; border-radius: 3px; font-size: 11px; }
+  .modal-input { width: 100%; padding: 9px 12px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; outline: none; margin-bottom: 10px; font-family: monospace; }
+  .modal-input:focus { border-color: var(--accent); }
+  .modal-input::placeholder { color: var(--muted); font-family: inherit; }
+  .modal-btn { width: 100%; padding: 10px; border-radius: 7px; border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: opacity 0.15s; }
+  .modal-btn:hover { opacity: 0.85; }
+  .modal-btn:disabled { opacity: 0.4; cursor: default; }
+  .modal-row { display: flex; gap: 8px; margin-bottom: 10px; }
+  .modal-row .modal-input { margin-bottom: 0; }
+  .modal-sep { text-align: center; color: var(--muted); font-size: 11px; margin: 14px 0; position: relative; }
+  .modal-sep::before, .modal-sep::after { content:''; position: absolute; top: 50%; width: 42%; height: 1px; background: var(--border); }
+  .modal-sep::before { left: 0; } .modal-sep::after { right: 0; }
+  .modal-link { font-size: 11px; color: var(--accent); text-decoration: none; }
+  .modal-link:hover { text-decoration: underline; }
+  .modal-error { font-size: 12px; color: var(--red); margin-bottom: 10px; min-height: 18px; }
+
+  /* ── Header ── */
+  header { background: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460); padding: 16px 28px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .header-left h1 { font-size: 18px; font-weight: 700; color: #fff; }
+  .header-left p { color: var(--muted); font-size: 11px; margin-top: 2px; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+  .save-btn { padding: 7px 18px; border-radius: 7px; border: none; background: var(--accent); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+  .save-btn:hover { opacity: 0.85; }
+  .save-btn:disabled { opacity: 0.5; cursor: default; }
+  .save-btn.saved { background: #1a4a2a; color: var(--green); border: 1px solid #0a3a1a; }
+  #saveStatus { font-size: 12px; white-space: nowrap; }
+  .token-btn { font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 5px; padding: 4px 9px; cursor: pointer; }
+  .token-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* ── Stats / Controls ── */
+  .stats-bar { display: flex; gap: 20px; padding: 12px 28px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
+  .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
+  .stat-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .stat-num { font-weight: 700; font-size: 15px; }
+  .stat:hover .stat-num { text-decoration: underline; }
+
+  .controls { display: flex; gap: 6px; padding: 10px 28px; background: var(--bg); border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
+  .filter-btn { padding: 4px 12px; border-radius: 20px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; font-size: 12px; transition: all 0.15s; }
+  .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--text); }
+  .filter-btn.active { background: var(--surface2); }
+  .ctrl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
+  .action-btn { padding: 4px 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 11px; transition: all 0.15s; }
+  .action-btn:hover { border-color: var(--accent); color: var(--text); }
+  .search-box { margin-left: auto; padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 12px; width: 200px; outline: none; }
+  .search-box:focus { border-color: var(--accent); }
+
+  /* ── Cards ── */
+  main { padding: 20px 28px; }
+  .category-section { margin-bottom: 28px; }
+  .cat-header { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; user-select: none; }
+  .cat-header h2 { font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .cat-count { background: var(--surface2); color: var(--muted); padding: 1px 7px; border-radius: 10px; font-size: 11px; }
+  .cat-chevron { margin-left: auto; color: var(--muted); font-size: 11px; transition: transform 0.2s; }
+  .category-section.collapsed .cat-chevron { transform: rotate(-90deg); }
+  .category-section.collapsed .cards-grid { display: none; }
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s; }
+  .card:hover { border-color: #3a3a52; }
+  .card.status-complete { border-left: 3px solid var(--green); }
+  .card.status-inprogress { border-left: 3px solid var(--amber); }
+  .card.status-pending { border-left: 3px solid var(--muted); }
+  .card.status-onhold { border-left: 3px solid var(--blue); }
+  .card.status-archived { border-left: 3px solid #444; opacity: 0.6; }
+
+  .card-row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+  .card-name { font-weight: 600; font-size: 13px; line-height: 1.4; flex: 1; min-width: 120px; }
+  .card-badges { display: flex; gap: 4px; flex-wrap: wrap; flex-shrink: 0; }
+
+  .badge { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; white-space: nowrap; }
+  .badge-complete { background: var(--green-bg); color: var(--green); }
+  .badge-inprogress { background: var(--amber-bg); color: var(--amber); }
+  .badge-pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .badge-onhold { background: var(--blue-bg); color: var(--blue); }
+  .badge-archived { background: #1a1a1a; color: #555; }
+  .badge-inapp { background: var(--cyan-bg); color: var(--cyan); border: 1px solid #0e3d47; }
+  .badge-notinapp { background: var(--surface2); color: #555; border: 1px solid #333; }
+  .badge-orphan { background: var(--orange-bg); color: var(--orange); border: 1px solid #4a2800; }
+
+  .app-design-name { font-size: 10px; color: var(--muted); font-style: italic; }
+
+  .file-indicators { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
+  .fi { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); display: flex; align-items: center; gap: 3px; }
+  .fi.has { color: var(--purple); border-color: #4c3d8a; }
+  .fi.has-front { color: #67e8f9; border-color: #1e4a5a; }
+  .fi.has-back { color: #34d399; border-color: #064e3b; }
+  .fi.missing { color: #f87171; border-color: #4a1111; }
+
+  .print-tracker { display: flex; align-items: center; gap: 6px; }
+  .print-label { font-size: 10px; color: var(--muted); }
+  .print-input { width: 44px; font-size: 12px; font-weight: 700; padding: 2px 5px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); text-align: center; outline: none; -moz-appearance: textfield; }
+  .print-input:focus { border-color: var(--accent); }
+  .print-input::-webkit-outer-spin-button, .print-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .print-sep { color: var(--muted); font-size: 13px; }
+  .print-limit { font-size: 12px; color: var(--muted); min-width: 20px; }
+  .print-auto { font-size: 10px; color: #4a8a5a; background: #0a2010; padding: 1px 5px; border-radius: 4px; }
+  .print-complete-btn { font-size: 10px; color: var(--green); background: var(--green-bg); border: 1px solid #0a4020; padding: 2px 8px; border-radius: 4px; cursor: pointer; margin-left: 4px; }
+  .print-complete-btn:hover { background: #073d18; }
+
+  .flags { display: flex; flex-direction: column; gap: 3px; }
+  .flag { font-size: 10px; color: var(--amber); background: var(--amber-bg); padding: 2px 7px; border-radius: 4px; border: 1px solid #4a2e00; line-height: 1.4; }
+
+  .expand-btn { font-size: 10px; color: var(--muted); background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
+  .expand-btn:hover { color: var(--text); }
+  .card-detail { display: none; flex-direction: column; gap: 6px; padding-top: 2px; }
+  .card.expanded .card-detail { display: flex; }
+
+  .status-select { font-size: 11px; padding: 4px 7px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 100%; cursor: pointer; outline: none; }
+  .status-select:focus { border-color: var(--accent); }
+  .card-notes { font-size: 11px; padding: 6px 8px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 100%; resize: vertical; min-height: 40px; font-family: inherit; outline: none; line-height: 1.5; }
+  .card-notes:focus { border-color: var(--accent); }
+  .card-notes::placeholder { color: var(--muted); }
+
+  .orphan-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 8px; }
+  .orphan-card { background: #16160f; border: 1px solid #3a3a1a; border-radius: 8px; padding: 12px 14px; }
+  .orphan-name { font-weight: 600; font-size: 13px; color: var(--orange); }
+  .orphan-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .orphan-note { font-size: 10px; color: #888; font-style: italic; margin-top: 4px; }
+
+  /* Loading state */
+  .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 500; }
+  .loading-overlay.hidden { display: none; }
+  .loading-spinner { color: var(--text); font-size: 14px; background: var(--surface); padding: 20px 32px; border-radius: 10px; border: 1px solid var(--border); }
+
+  #importFile { display: none; }
+  .hidden { display: none !important; }
+  @media (max-width: 600px) { header, .stats-bar, .controls, main { padding-left: 14px; padding-right: 14px; } .cards-grid { grid-template-columns: 1fr; } .header-right { width: 100%; justify-content: flex-end; } }
+</style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div class="loading-overlay hidden" id="loadingOverlay">
+  <div class="loading-spinner" id="loadingMsg">Loading data…</div>
+</div>
+
+<!-- Token setup modal -->
+<div class="modal-overlay" id="tokenModal">
+  <div class="modal">
+    <h2>🔑 Connect to GitHub</h2>
+    <p>This tracker stores your data in GitHub. You'll need a Personal Access Token — create one once, enter it here, and it's saved to this browser.</p>
+    <ol>
+      <li>Go to <a class="modal-link" href="https://github.com/settings/tokens?type=beta" target="_blank">github.com → Settings → Developer settings → Fine-grained tokens</a></li>
+      <li>Click <strong style="color:var(--text)">Generate new token</strong></li>
+      <li>Name it anything (e.g. <code>perception-cards</code>)</li>
+      <li>Under <strong style="color:var(--text)">Repository access</strong> → Only select repositories → pick <code>perception-cards-tracker</code></li>
+      <li>Under <strong style="color:var(--text)">Permissions → Contents</strong> → set to <code>Read and write</code></li>
+      <li>Click <strong style="color:var(--text)">Generate token</strong> and copy it</li>
+    </ol>
+    <div id="tokenError" class="modal-error"></div>
+    <input class="modal-input" id="tokenInput" type="password" placeholder="github_pat_…" autocomplete="off" />
+    <button class="modal-btn" id="connectBtn" onclick="connectToken()">Connect &amp; Load Data</button>
+    <div class="modal-sep">or migrate existing data</div>
+    <p style="font-size:12px;margin-bottom:10px">Already have a backup JSON from the old tracker? Import it after connecting.</p>
+  </div>
+</div>
+
+<header>
+  <div class="header-left">
+    <h1>⚡ Perception Cards – Design Tracker</h1>
+    <p>Data stored in GitHub · Status &amp; print count are manual · App data as of June 2026</p>
+  </div>
+  <div class="header-right">
+    <span id="saveStatus" style="color:var(--muted);font-size:12px"></span>
+    <button class="save-btn" id="saveBtn" onclick="saveData()">Save</button>
+    <button class="token-btn" onclick="showTokenModal()" title="Change GitHub token">⚙ Token</button>
+  </div>
+</header>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="controls">
+  <span style="color:var(--muted);font-size:12px">Status:</span>
+  <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
+  <button class="filter-btn" data-filter="pending" onclick="setFilter('pending',this)">Pending</button>
+  <button class="filter-btn" data-filter="inprogress" onclick="setFilter('inprogress',this)">In Progress</button>
+  <button class="filter-btn" data-filter="complete" onclick="setFilter('complete',this)">Complete</button>
+  <button class="filter-btn" data-filter="onhold" onclick="setFilter('onhold',this)">On Hold</button>
+  <button class="filter-btn" data-filter="flags" onclick="setFilter('flags',this)">⚠ Issues</button>
+  <button class="filter-btn" data-filter="inapp" onclick="setFilter('inapp',this)">✓ In App</button>
+  <button class="filter-btn" data-filter="notinapp" onclick="setFilter('notinapp',this)">Not in App</button>
+  <div class="ctrl-sep"></div>
+  <button class="action-btn" onclick="exportData()">⬇ Backup JSON</button>
+  <button class="action-btn" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
+  <input type="file" id="importFile" accept=".json" onchange="importData(event)">
+  <input class="search-box" type="text" placeholder="Search…" oninput="searchCards(this.value)" />
+</div>
+
+<main id="main"></main>
+
+<script>
+// ─── GitHub config ───────────────────────────────────────────────────────────
+const GH = {
+  owner:  'ddpedersen',
+  repo:   'perception-cards-tracker',
+  file:   'data.json',
+  branch: 'main',
+  sha:    null,
+  get token()  { return localStorage.getItem('pct_gh_token') || ''; },
+  set token(v) { v ? localStorage.setItem('pct_gh_token', v) : localStorage.removeItem('pct_gh_token'); },
+  get url()    { return `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${this.file}`; },
+};
+
+// ─── App state ────────────────────────────────────────────────────────────────
+let appData = {};  // { [cardId]: { status, notes, printed } }
+let isDirty = false;
+
+// ─── STATUS config ────────────────────────────────────────────────────────────
+const STATUS = {
+  pending:    { label: 'Pending',     badge: 'badge-pending',    color: 'var(--muted)' },
+  inprogress: { label: 'In Progress', badge: 'badge-inprogress', color: 'var(--amber)' },
+  complete:   { label: 'Complete',    badge: 'badge-complete',   color: 'var(--green)' },
+  onhold:     { label: 'On Hold',     badge: 'badge-onhold',     color: 'var(--blue)'  },
+  archived:   { label: 'Archived',    badge: 'badge-archived',   color: '#555'         },
+};
+
+// ─── Card data ────────────────────────────────────────────────────────────────
+const CATEGORIES = [
+{
+  id:'jared-kobe', name:'Artist Cards – Jared Emerson · Kobe Bryant',
+  cards:[
+    { id:'kobe-legendary',       name:'Kobe Legendary (base)',
+      ai:true,  front:false, back:true,  flags:['Missing Front PDF'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'Kobe Legendary - Angel', printLimit:1, printedAuto:1 },
+    { id:'kobe-legendary-gold',  name:'Kobe Legendary – Gold of2',
+      ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'],
+      appDesign:'Kobe Legendary - Gold', printLimit:2, printedAuto:2 },
+    { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard',
+      ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'],
+      appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
+    { id:'kobe-legendary-silver',name:'Kobe Legendary – Silver Holo',
+      ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'],
+      appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
+    { id:'kobe-chrome',          name:'Portrait – Chrome 1of2',
+      ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'],
+      appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
+    { id:'kobe-chrome-plate',    name:'Portrait – Chrome 1of2 · Graded Plate',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'kobe-plastic-holo',    name:'Portrait – Plastic Holo',
+      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
+      appDesign:'Black Mamba - Satin Holographic', printLimit:10, printedAuto:10,
+      appNameNote:'File: "Plastic Holo" / App: "Satin Holographic" – confirm same design' },
+    { id:'kobe-snake-print',     name:'Portrait – Snake Print',
+      ai:false, front:true,  back:true,  flags:['No .ai source file'],
+      appDesign:'Black Mamba - Holographic Snake', printLimit:5, printedAuto:5,
+      appNameNote:'File: "Snake Print" / App: "Holographic Snake" – confirm same design' },
+    { id:'kobe-snakeskin',       name:'Portrait – Snake Skin 1of1',
+      ai:true,  front:true,  back:true,  flags:['3 .ai files (Front, Back, Plate) – consider consolidating to 1'],
+      appDesign:'Black Mamba on Snake Skin', printLimit:1, printedAuto:0 },
+    { id:'kobe-snakeskin-box',   name:'Portrait – Snake Skin 1of1 · Custom Box',
+      ai:true,  front:false, back:false, flags:['Only unlabeled tiled PDF (box may be single-sided, confirm)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'kobe-court-dreams',    name:'Court Dreams',
+      ai:true,  front:true,  back:true,  flags:['Folder is in Kobe Bryant but design features LeBron (Lebron Laying down - Gigi Shoe)'],
+      appDesign:'Court Dreams - Purple 1/1', printLimit:1, printedAuto:1 },
+  ]
+},
+{
+  id:'jared-mj', name:'Artist Cards – Jared Emerson · Michael Jordan',
+  cards:[
+    { id:'mj-portrait',          name:'Jordan Portrait',
+      ai:true,  front:true,  back:true,  flags:['Folder contains 2 separate designs (Jordan Portrait + Jordan/Kobe Dual) – consider splitting'],
+      appDesign:'MJ Portrait - Copper', printLimit:10, printedAuto:10 },
+    { id:'mj-kobe-dual',         name:'Jordan/Kobe Dual Portrait',
+      ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'],
+      appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
+    { id:'mj-portrait-gold',     name:'Jordan Portrait – of1 Gold',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
+    { id:'mj-flight-angel',      name:'MJ in Flight – Angel 1of1',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
+    { id:'mj-flight-clear-air',  name:'MJ in Flight – Angel Clear Air',
+      ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'mj-flight-rare-air',   name:'MJ in Flight – Angel Rare Air 1of1',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
+    { id:'mj-flight-clear',      name:'MJ in Flight – Clear',
+      ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'],
+      appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
+    { id:'mj-flight-leather',    name:'MJ in Flight – Leather GOAT 1of1',
+      ai:true,  front:false, back:true,  flags:['Missing Front PDF'],
+      appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
+    { id:'mj-flight-holo',       name:'MJ in Flight – Plastic Holo',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
+      appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
+    { id:'mj-flight-stained',    name:'MJ in Flight – Stained Glass',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
+    { id:'mj-flight-space',      name:'MJ in Flight – Space (Concept)',
+      ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'jared-other', name:'Artist Cards – Jared Emerson · Other',
+  cards:[
+    { id:'lebron-legendary',     name:'LeBron James – Legendary',
+      ai:true,  front:true,  back:false, flags:['Missing Back PDF','2 Front PDFs (Legendary + Stripe variant)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'shaq-dunk',            name:'Shaq Dunk',
+      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'hardaway',             name:'Hardaway Pass',
+      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'dual-orlando',         name:'Dual Orlando',
+      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gng-dual',             name:'GnG Dual (Jordan/Kobe)',
+      ai:true,  front:true,  back:true,  flags:['Folder name says "do we need these" – confirm if still needed'],
+      appDesign:'Dual MJ & Kobe Art Card - Gold 1/1', printLimit:1, printedAuto:1 },
+    { id:'card-backs',           name:'Card Back Designs (template)',
+      ai:true,  front:false, back:false, flags:['Template .ai at Jared Emerson root – not in a design subfolder'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'athletic-art', name:'Artist Cards – Athletic Art SC',
+  cards:[
+    { id:'neoleo', name:'NeoLeo (Leonardo)',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'Neo Leo - Holo of 10', printLimit:10, printedAuto:10 },
+  ]
+},
+{
+  id:'baseball', name:'Baseball',
+  cards:[
+    { id:'kerry-wood',    name:'Kerry Wood – Gum Card',
+      ai:true,  front:true,  back:true,  flags:['Multiple PDFs (Testimony variant) in same folder'],
+      appDesign:'Kerry Wood - Bubble Gum Art', printLimit:3, printedAuto:3 },
+    { id:'roger-clemens', name:'Roger Clemens',
+      ai:true,  front:true,  back:false, flags:['Files at Baseball/ root – not in own subfolder','Missing Back PDF','Filename spells "Clemons" (check: Clemens vs Clemons)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'football', name:'Football',
+  cards:[
+    { id:'cam-skattebo',       name:'Cam Skattebo – Wreck it Rattebo',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'Wreck It Rattebo', printLimit:3, printedAuto:1 },
+    { id:'josh-lego',          name:'Josh Allen – Lego Figure',
+      ai:true,  front:true,  back:true,  flags:['Files at Football/ root – not inside Josh Allen subfolder'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'josh-puffs',         name:'Josh Allen – MVP Puffs Box',
+      ai:true,  front:false, back:true,  flags:['No Front PDF (box may be single-sided – confirm)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'josh-playing-cards', name:'Josh Allen – Playing Cards (set)',
+      ai:true,  front:true,  back:true,  flags:['Many .ai alternates in folder – consider archiving non-final versions'],
+      appDesign:'King & Queen of our Hearts', printLimit:10, printedAuto:1,
+      appAlso:['King of our Hearts (Josh Allen, std, 1 printed)','Queen of our Hearts (Hailee Steinfeld, std, 1 printed)'] },
+    { id:'lee-smith',          name:'Lee Smith',
+      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
+      appDesign:'Lee Smith Holo Leather', printLimit:1, printedAuto:1 },
+  ]
+},
+{
+  id:'micro-wrestling', name:'Micro Wrestling',
+  cards:[
+    { id:'micro-tiger',      name:'MICRO TIGER',
+      ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files – main card + print tiles both present'],
+      appDesign:'Micro Tiger Holo Auto', printLimit:null, printedAuto:3 },
+    { id:'syko',             name:'SYKO',
+      ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files'],
+      appDesign:'SYKO Holo Auto', printLimit:null, printedAuto:3,
+      appAlso:['SYKO Holo - Prototype (std, 2 printed)'] },
+    { id:'pinky-shortcake',  name:'Pinky Shortcake',
+      ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported yet'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'unknown-wrestler', name:'Unknown Wrestler',
+      ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'baby-jesus',       name:'Baby Jesus',
+      ai:false, front:false, back:false, flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'knate',            name:'KNate the Knome',
+      ai:false, front:false, back:false, flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'graded-plates', name:'Graded Plates',
+  cards:[
+    { id:'plate-court-dreams', name:'Court Dreams Purple',
+      ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder','Graded plates may be single-sided – confirm'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'plate-leather-goat', name:'In-Flight Leather GOAT',
+      ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'magical', name:'Magical Cards',
+  cards:[
+    { id:'magical-card', name:'Magical Card',
+      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
+      appDesign:'Magical Emerald', printLimit:null, printedAuto:2 },
+  ]
+},
+{
+  id:'philanthropy', name:'Philanthropic Projects',
+  cards:[
+    { id:'betty-card',    name:'Betty Card',
+      ai:true,  front:true,  back:true,  flags:['Files at Philanthropic Projects/ root – not in own subfolder'],
+      appDesign:'Betty of Ethiopia', printLimit:10, printedAuto:1 },
+    { id:'jake-kellehan', name:'Jake Kellehan (First Order)',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:'Joseph & Kirkley Kellahan - 1/1', printLimit:1, printedAuto:1,
+      appNameNote:'File folder: "Jake Kellehan" / App: "Joseph & Kirkley Kellahan" – verify subject name' },
+  ]
+},
+{
+  id:'derek-personal', name:"Derek's Personal Projects",
+  cards:[
+    { id:'blades-brown',    name:'Blades Brown (pre-sign)',
+      ai:true,  front:false, back:false, flags:['File at Personal root – not in own subfolder','Only unlabeled copy PDF – no Front/Back exports'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'words-from-god',  name:'Words From God',
+      ai:true,  front:true,  back:true,  flags:['3 Front variant PDFs (Big, Lose Count, Stay)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'erik-life-plan',  name:'Erik Jacobson – Life Plan Card',
+      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'fake-duplicates', name:'Allen & Dart Faux-thentic',
+      ai:true,  front:true,  back:true,  flags:['Front/Back PDF names reference different subjects (Allen ↔ Dart) – verify naming'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'grandpa-deer',    name:"Grandpa's First Deer – 1955",
+      ai:true,  front:false, back:false, flags:['Only unlabeled copy PDF – no Front/Back exports'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-athena',      name:'Gymnastics – Athena',
+      ai:false, front:true,  back:true,  flags:['No .ai source (older format)','Has combined unlabeled PDF + labeled Front/Back PDFs'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-collins',     name:'Gymnastics – Collins',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-julia',       name:'Gymnastics – Julia',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-katarina',    name:'Gymnastics – Katarina',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-mika',        name:'Gymnastics – Mika',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-scarlett',    name:'Gymnastics – Scarlett',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-sophie',      name:'Gymnastics – Sophie',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'gym-zara',        name:'Gymnastics – Zara',
+      ai:true,  front:true,  back:true,  flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'mika-standalone', name:'Mika (standalone)',
+      ai:false, front:false, back:true,  flags:['No .ai source','4 unlabeled PDFs (Mika, Mika 2, Mika Gloss, Mika Back) – old format, needs cleanup'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'real-motors',     name:'Real Motors – Bike Cards',
+      ai:true,  front:true,  back:true,  flags:['3 separate Front PDFs (Bike Card 1/2/3) – multiple designs in one folder?'],
+      appDesign:'RealMotors - Project : ARES', printLimit:3, printedAuto:3 },
+    { id:'soccer-jonah',    name:'Soccer – Jonah Legendary',
+      ai:true,  front:false, back:false, flags:['PDF not labeled Front/Back (old format?)'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'soccer-william',  name:'Soccer – William Legendary',
+      ai:true,  front:false, back:false, flags:['No PDFs exported yet'],
+      appDesign:null, printLimit:null, printedAuto:0 },
+    { id:'kid-projects',    name:'Kid Projects',
+      ai:false, front:false, back:false, flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+{
+  id:'matt-personal', name:"Matt's Personal Projects",
+  cards:[
+    { id:'matt-empty', name:'(No designs yet)',
+      ai:false, front:false, back:false, flags:[],
+      appDesign:null, printLimit:null, printedAuto:0 },
+  ]
+},
+];
+
+const ORPHAN_DESIGNS = [
+  { name:'Mystery Card Design',     subject:'—',               limit:null, printed:0, type:'design' },
+  { name:'Promo Card',              subject:'—',               limit:null, printed:9, type:'design' },
+  { name:'Promo Card - Signed',     subject:'—',               limit:10,   printed:3, type:'design' },
+  { name:'King of our Hearts',      subject:'Josh Allen',      limit:null, printed:1, type:'design',
+    note:'Shares files with "Josh Allen – Playing Cards" folder' },
+  { name:'Queen of our Hearts',     subject:'Hailee Steinfeld',limit:null, printed:1, type:'design',
+    note:'Shares files with "Josh Allen – Playing Cards" folder' },
+  { name:'Jordan Stained Glass',    subject:'Michael Jordan',  limit:null, printed:2, claimed:1, type:'orphan-card',
+    note:'Old design – not in CardDesigns. May be predecessor to MJ in Flight - Stained Glass.' },
+  { name:'Kobe Bryant First Print', subject:'Kobe Bryant',     limit:2,    printed:0, claimed:0, type:'orphan-card',
+    note:'Old prototype. 2 cards in system, serials visible, none activated.' },
+  { name:'LeBron James Crown',      subject:'LeBron James',    limit:2,    printed:1, claimed:0, type:'orphan-card',
+    note:'No matching file found. Design not in CardDesigns list.' },
+  { name:'Ms. LongNose',            subject:'—',               limit:1,    printed:1, claimed:1, type:'orphan-card',
+    note:'Card claimed but no matching design file or CardDesigns entry.' },
+];
+
+// ─── GitHub load / save ──────────────────────────────────────────────────────
+async function loadData() {
+  showLoading('Loading data from GitHub…');
+  try {
+    const res = await fetch(`${GH.url}?ref=${GH.branch}&t=${Date.now()}`, {
+      headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json' }
+    });
+    if (res.status === 404) {
+      GH.sha = null;
+      appData = {};
+      setSaveStatus('No saved data yet — make edits and click Save', 'var(--muted)');
+    } else if (res.status === 401) {
+      GH.token = '';
+      hideLoading();
+      showTokenModal('Invalid token. Please re-enter.');
+      return;
+    } else if (!res.ok) {
+      throw new Error(`GitHub error ${res.status}`);
+    } else {
+      const json = await res.json();
+      GH.sha = json.sha;
+      const raw = decodeURIComponent(escape(atob(json.content.replace(/\n/g,''))));
+      appData = JSON.parse(raw);
+      setSaveStatus('', '');
+    }
+    isDirty = false;
+    renderAll();
+  } catch(e) {
+    setSaveStatus('⚠ Load failed: ' + e.message, 'var(--red)');
+    renderAll();
+  }
+  hideLoading();
+}
+
+async function saveData() {
+  if (!GH.token) { showTokenModal(); return; }
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  btn.classList.remove('saved');
+  setSaveStatus('', '');
+  try {
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(appData, null, 2))));
+    const body = { message: `Update tracker data ${new Date().toISOString().slice(0,10)}`, content, branch: GH.branch };
+    if (GH.sha) body.sha = GH.sha;
+    const res = await fetch(GH.url, {
+      method: 'PUT',
+      headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json', 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `GitHub error ${res.status}`);
+    }
+    const json = await res.json();
+    GH.sha = json.content.sha;
+    isDirty = false;
+    btn.textContent = '✓ Saved';
+    btn.classList.add('saved');
+    setSaveStatus('', '');
+    setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 3000);
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Save';
+    setSaveStatus('⚠ Save failed: ' + e.message, 'var(--red)');
+  }
+  btn.disabled = false;
+}
+
+// ─── Token modal ──────────────────────────────────────────────────────────────
+function showTokenModal(errMsg) {
+  document.getElementById('tokenModal').classList.remove('hidden');
+  document.getElementById('tokenError').textContent = errMsg || '';
+  document.getElementById('tokenInput').value = '';
+  setTimeout(() => document.getElementById('tokenInput').focus(), 100);
+}
+function hideTokenModal() {
+  document.getElementById('tokenModal').classList.add('hidden');
+}
+async function connectToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) { document.getElementById('tokenError').textContent = 'Please enter a token.'; return; }
+  const btn = document.getElementById('connectBtn');
+  btn.disabled = true; btn.textContent = 'Connecting…';
+  GH.token = val;
+  hideTokenModal();
+  await loadData();
+  btn.disabled = false; btn.textContent = 'Connect & Load Data';
+}
+document.getElementById('tokenInput').addEventListener('keydown', e => { if (e.key === 'Enter') connectToken(); });
+
+// ─── Save status helpers ──────────────────────────────────────────────────────
+function setSaveStatus(msg, color) {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.style.color = color || 'var(--muted)';
+}
+function markDirty() {
+  if (!isDirty) { isDirty = true; setSaveStatus('● Unsaved changes', 'var(--amber)'); }
+}
+
+// ─── Loading overlay ──────────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('loadingMsg').textContent = msg;
+  document.getElementById('loadingOverlay').classList.remove('hidden');
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.add('hidden');
+}
+
+// ─── Data accessors ───────────────────────────────────────────────────────────
+function cardData(id) { return appData[id] || { status:'pending', notes:'', printed:null }; }
+function setField(id, field, val) {
+  if (!appData[id]) appData[id] = { status:'pending', notes:'', printed:null };
+  appData[id][field] = val;
+  markDirty();
+}
+
+// ─── Export / Import (backup) ─────────────────────────────────────────────────
+function exportData() {
+  const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'pct-backup-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function importData(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (confirm(`Import ${Object.keys(data).length} card records? Click Save to push to GitHub.`)) {
+        appData = data; markDirty(); renderAll();
+      }
+    } catch { alert('Invalid JSON file.'); }
+    e.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ─── Unsaved-changes warning ──────────────────────────────────────────────────
+window.addEventListener('beforeunload', e => { if (isDirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); saveData(); } });
+
+// ─── State ────────────────────────────────────────────────────────────────────
+let filter = 'all', search = '';
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function renderAll() { renderStats(); renderMain(); }
+
+function renderStats() {
+  const c = { pending:0, inprogress:0, complete:0, onhold:0, archived:0, flagged:0, inapp:0, total:0 };
+  CATEGORIES.forEach(cat => cat.cards.forEach(card => {
+    const d = cardData(card.id);
+    c[d.status]++; c.total++;
+    if (card.flags.length) c.flagged++;
+    if (card.appDesign) c.inapp++;
+  }));
+  document.getElementById('statsBar').innerHTML =
+    Object.entries(STATUS).map(([k,v]) => `
+      <div class="stat" onclick="setFilter('${k}',null)">
+        <div class="stat-dot" style="background:${v.color}"></div>
+        <span class="stat-num" style="color:${v.color}">${c[k]}</span>
+        <span style="color:var(--muted)">${v.label}</span>
+      </div>`).join('') +
+    `<div class="stat" onclick="setFilter('flags',null)" style="margin-left:8px">
+      <div class="stat-dot" style="background:var(--amber)"></div>
+      <span class="stat-num" style="color:var(--amber)">${c.flagged}</span>
+      <span style="color:var(--muted)">Issues</span>
+    </div>
+    <div class="stat" onclick="setFilter('inapp',null)">
+      <div class="stat-dot" style="background:var(--cyan)"></div>
+      <span class="stat-num" style="color:var(--cyan)">${c.inapp}</span>
+      <span style="color:var(--muted)">In App</span>
+    </div>
+    <div class="stat" style="margin-left:auto;cursor:default">
+      <span class="stat-num">${c.total}</span>
+      <span style="color:var(--muted)">Total</span>
+    </div>`;
+}
+
+function renderMain() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  CATEGORIES.forEach(cat => {
+    const visible = cat.cards.filter(card => {
+      const d = cardData(card.id);
+      if (filter === 'flags') return card.flags.length > 0;
+      if (filter === 'inapp') return !!card.appDesign;
+      if (filter === 'notinapp') return !card.appDesign;
+      if (filter !== 'all' && d.status !== filter) return false;
+      if (search && !card.name.toLowerCase().includes(search) && !cat.name.toLowerCase().includes(search)) return false;
+      return true;
+    });
+    if (!visible.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'category-section';
+    sec.innerHTML = `
+      <div class="cat-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <h2>${cat.name}</h2><span class="cat-count">${visible.length}</span><span class="cat-chevron">▼</span>
+      </div>
+      <div class="cards-grid">${visible.map(c => cardHTML(c)).join('')}</div>`;
+    main.appendChild(sec);
+  });
+
+  // Orphan section
+  if (!['flags','complete','inprogress','onhold','archived','pending','inapp'].includes(filter)) {
+    const sec = document.createElement('div');
+    sec.className = 'category-section';
+    sec.innerHTML = `
+      <div class="cat-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <h2>App Designs – No File Match</h2><span class="cat-count">${ORPHAN_DESIGNS.length}</span><span class="cat-chevron">▼</span>
+      </div>
+      <div class="orphan-grid">${ORPHAN_DESIGNS.map(orphanHTML).join('')}</div>`;
+    main.appendChild(sec);
+  }
+}
+
+function printedValue(card) {
+  const d = cardData(card.id);
+  return d.printed !== null ? d.printed : card.printedAuto;
+}
+
+function cardHTML(card) {
+  const d = cardData(card.id);
+  const s = STATUS[d.status];
+  const pv = printedValue(card);
+  const isLimited = card.printLimit !== null;
+  const setComplete = isLimited && pv >= card.printLimit && d.status !== 'complete';
+  const autoHint = d.printed !== null && d.printed !== card.printedAuto && card.printedAuto > 0
+    ? `<span class="print-auto">app: ${card.printedAuto}</span>` : '';
+  return `<div class="card status-${d.status}" id="c-${card.id}">
+    <div class="card-row1">
+      <div class="card-name">${card.name}</div>
+      <div class="card-badges">
+        ${card.appDesign ? `<span class="badge badge-inapp">✓ In App</span>` : `<span class="badge badge-notinapp">Not in App</span>`}
+        <span class="badge ${s.badge}">${s.label}</span>
+      </div>
+    </div>
+    ${card.appDesign ? `<div class="app-design-name">App: ${card.appDesign}${card.appNameNote?` <span style="color:var(--red)">⚠</span>`:''}` + `</div>` : ''}
+    <div class="file-indicators">
+      <span class="fi ${card.ai?'has':'missing'}">${card.ai?'✓':'✗'} .ai</span>
+      <span class="fi ${card.front?'has-front':'missing'}">${card.front?'✓':'✗'} Front PDF</span>
+      <span class="fi ${card.back?'has-back':'missing'}">${card.back?'✓':'✗'} Back PDF</span>
+    </div>
+    ${(card.appDesign||card.printedAuto>0) ? `
+    <div class="print-tracker">
+      <span class="print-label">Printed:</span>
+      <input type="number" class="print-input" value="${pv}" min="0" max="${card.printLimit||9999}"
+        onchange="updatePrinted('${card.id}',this.value,${card.printLimit||'null'})">
+      <span class="print-sep">/</span>
+      <span class="print-limit">${isLimited ? card.printLimit : '—'}</span>
+      ${autoHint}
+      ${setComplete ? `<button class="print-complete-btn" onclick="markComplete('${card.id}')">✓ Mark Complete</button>` : ''}
+    </div>` : ''}
+    ${card.appAlso ? `<div style="font-size:10px;color:var(--muted)">Also in app: ${card.appAlso.join(' · ')}</div>` : ''}
+    ${card.appNameNote ? `<div class="flag">⚠ ${card.appNameNote}</div>` : ''}
+    ${card.flags.length ? `<div class="flags">${card.flags.map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
+    <button class="expand-btn" onclick="toggleCard('${card.id}')">+ edit status / notes</button>
+    <div class="card-detail">
+      <select class="status-select" onchange="updateStatus('${card.id}',this.value)">
+        ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===d.status?'selected':''}>${v.label}</option>`).join('')}
+      </select>
+      <textarea class="card-notes" placeholder="Notes, next steps, blockers…" onblur="updateNotes('${card.id}',this.value)">${d.notes}</textarea>
+    </div>
+  </div>`;
+}
+
+function orphanHTML(o) {
+  const claimedStr = o.claimed !== undefined ? ` · ${o.claimed} claimed` : '';
+  return `<div class="orphan-card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:6px">
+      <div class="orphan-name">${o.name}</div>
+      <span class="badge ${o.type==='orphan-card'?'badge-orphan':'badge-notinapp'}" style="font-size:9px">${o.type==='orphan-card'?'⚠ Orphan':'◌ App-Only'}</span>
+    </div>
+    <div class="orphan-meta">${o.subject} · ${o.printed} printed${o.limit?'/'+o.limit:'/—'}${claimedStr}</div>
+    ${o.note ? `<div class="orphan-note">${o.note}</div>` : ''}
+  </div>`;
+}
+
+function toggleCard(id) {
+  const el = document.getElementById('c-'+id);
+  el.classList.toggle('expanded');
+  el.querySelector('.expand-btn').textContent = el.classList.contains('expanded') ? '− close' : '+ edit status / notes';
+}
+function updateStatus(id, val) { setField(id,'status',val); renderAll(); }
+function updateNotes(id, val)  { setField(id,'notes',val); }
+function updatePrinted(id, val, limit) {
+  const n = Math.max(0, parseInt(val) || 0);
+  setField(id,'printed',n);
+  renderStats();
+  if (limit && n >= limit) renderMain();
+}
+function markComplete(id) { setField(id,'status','complete'); renderAll(); }
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  (btn || document.querySelector(`[data-filter="${f}"]`))?.classList.add('active');
+  renderMain();
+}
+function searchCards(val) { search = val.toLowerCase(); renderMain(); }
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+renderAll(); // render shell immediately
+if (GH.token) { loadData(); } else { showTokenModal(); }
+</script>
+</body>
+</html>
