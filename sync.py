@@ -165,12 +165,33 @@ def get_dbx_token():
     })
     return r['access_token']
 
-def list_folder_direct(token, path):
+def get_path_root(token):
+    """For Dropbox Business: returns Dropbox-API-Path-Root header for root namespace."""
+    req = urllib.request.Request(
+        'https://api.dropboxapi.com/2/users/get_current_account',
+        data=b'null',
+        headers={'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            acct = json.loads(r.read())
+        root_ns = acct.get('root_info', {}).get('root_namespace_id')
+        if root_ns:
+            print(f'  Using root namespace {root_ns}')
+            return json.dumps({'.tag': 'namespace_id', 'namespace_id': root_ns})
+    except Exception as e:
+        print(f'  Warning: namespace lookup failed: {e}')
+    return None
+
+
+def list_folder_direct(token, path, path_root=None):
     """Returns list of file entries for a Dropbox folder (non-recursive)."""
     headers = {
         'Authorization':  f'Bearer {token}',
         'Content-Type':   'application/json',
     }
+    if path_root:
+        headers['Dropbox-API-Path-Root'] = path_root
     try:
         data = http_post_json(
             'https://api.dropboxapi.com/2/files/list_folder',
@@ -191,10 +212,10 @@ def list_folder_direct(token, path):
         entries.extend(data.get('entries', []))
     return entries
 
-def detect_status(token, rel_path):
+def detect_status(token, rel_path, path_root=None):
     """Detect status from files in a folder."""
     full_path = f"{DBX_ROOT}/{rel_path}"
-    entries = list_folder_direct(token, full_path)
+    entries = list_folder_direct(token, full_path, path_root)
     files = [e for e in entries if e.get('.tag') == 'file']
     has_pdf = any(e['name'].lower().endswith('.pdf') for e in files)
     has_ai  = any(e['name'].lower().endswith('.ai')  for e in files)
@@ -254,27 +275,10 @@ def main():
     dbx_token = get_dbx_token()
     print('  OK')
 
+    print('Getting root namespace...')
+    path_root = get_path_root(dbx_token)
+    print('  OK')
 
-    # DEBUG: get account root namespace
-    import json as _json
-    import urllib.request as _req
-    _h = {'Authorization': f'Bearer {dbx_token}', 'Content-Type': 'application/json'}
-    _r = _req.Request('https://api.dropboxapi.com/2/users/get_current_account', data=b'null', headers=_h)
-    with _req.urlopen(_r) as _resp:
-        _acct = _json.loads(_resp.read())
-    print('DEBUG account root_info:', _json.dumps(_acct.get('root_info', {})))
-    print('DEBUG account name:', _acct.get('name', {}).get('display_name', ''))
-    # Try listing root with namespace header
-    _ns_id = _acct.get('root_info', {}).get('root_namespace_id', '')
-    if _ns_id:
-        import json as _j
-        _path_root = _j.dumps({'.tag': 'root', 'root': _ns_id})
-        _h2 = {'Authorization': f'Bearer {dbx_token}', 'Content-Type': 'application/json', 'Dropbox-API-Path-Root': _path_root}
-        _r2 = _req.Request('https://api.dropboxapi.com/2/files/list_folder', data=_j.dumps({'path': '', 'recursive': False}).encode(), headers=_h2)
-        with _req.urlopen(_r2) as _resp2:
-            _entries = _j.loads(_resp2.read()).get('entries', [])
-        print('DEBUG root entries with ns:', [e['name'] for e in _entries])
-    import sys; sys.exit(0)
 
     print('Loading data.json from GitHub...')
     data, sha = get_data_json()
@@ -282,7 +286,7 @@ def main():
 
     changes = []
     for card_id, rel_path in CARD_PATHS.items():
-        detected = detect_status(dbx_token, rel_path)
+        detected = detect_status(dbx_token, rel_path, path_root)
         current  = data.get(card_id, {}).get('status', 'pending')
         upgraded = upgrade_status(current, detected)
 
