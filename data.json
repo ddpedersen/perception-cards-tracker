@@ -131,8 +131,12 @@
   "unknown-wrestler": {
     "status": "inprogress"
   },
-  "baby-jesus": {},
-  "knate": {},
+  "baby-jesus": {
+    "status": "pending"
+  },
+  "knate": {
+    "status": "pending"
+  },
   "betty-card": {
     "status": "complete"
   },
@@ -190,5 +194,7 @@
   "soccer-william": {
     "status": "complete"
   },
-  "kid-projects": {}
+  "kid-projects": {
+    "status": "pending"
+  }
 }
