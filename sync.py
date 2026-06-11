@@ -1,19 +1,19 @@
 #!/usr/bin/env python3
 """
-Dropbox → GitHub data.json sync
+Dropbox â GitHub data.json sync
 Scans /Projects for .ai/.pdf files per card, upgrades statuses in data.json.
 Rules:
-  - .pdf present  → complete
-  - .ai only      → inprogress
-  - neither       → pending (only if currently pending)
-  - never downgrades: pending→inprogress→complete
+  - .pdf present  â complete
+  - .ai only      â inprogress
+  - neither       â pending (only if currently pending)
+  - never downgrades: pendingâinprogressâcomplete
   - never touches onhold or archived
 """
 
 import os, json, base64, time
 import urllib.request, urllib.parse, urllib.error
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# ââ Config ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 DBX_REFRESH  = os.environ['DROPBOX_REFRESH_TOKEN']
 DBX_KEY      = os.environ['DROPBOX_APP_KEY']
 DBX_SECRET   = os.environ['DROPBOX_APP_SECRET']
@@ -21,13 +21,13 @@ GH_TOKEN     = os.environ['GH_PAT']
 GH_REPO      = 'ddpedersen/perception-cards-tracker'
 GH_FILE      = 'data.json'
 GH_BRANCH    = 'main'
-DBX_ROOT     = '/Projects'
+DBX_ROOT     = '/Perception Cards/Projects'
 
 STATUS_ORDER = ['pending', 'inprogress', 'complete']
 
-# Card ID → folder path relative to /Projects (non-recursive scan)
+# Card ID â folder path relative to /Projects (non-recursive scan)
 CARD_PATHS = {
-    # ── Kobe Bryant ──────────────────────────────────────────────────────────
+    # ââ Kobe Bryant ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'kobe-legendary':        'Artist Cards/Jared Emerson/Kobe Bryant/Legendary',
     'kobe-legendary-angel':  'Artist Cards/Jared Emerson/Kobe Bryant/Legendary - Angel of1',
     'kobe-legendary-gold':   'Artist Cards/Jared Emerson/Kobe Bryant/Legendary - Gold of2',
@@ -41,7 +41,7 @@ CARD_PATHS = {
     'kobe-snakeskin-box':    'Artist Cards/Jared Emerson/Kobe Bryant/Portrait - Snake Skin 1of1/Custom Box',
     'kobe-court-dreams':     'Artist Cards/Jared Emerson/Kobe Bryant/Court Dreams',
 
-    # ── Michael Jordan ───────────────────────────────────────────────────────
+    # ââ Michael Jordan âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'mj-portrait':       'Artist Cards/Jared Emerson/Michael Jordan/Jordan Portrait',
     'mj-kobe-dual':      'Artist Cards/Jared Emerson/Michael Jordan/Jordan Portrait',       # same folder
     'mj-portrait-gold':  'Artist Cards/Jared Emerson/Michael Jordan/Jordan Portrait/Portrait - of1 Gold',
@@ -54,7 +54,7 @@ CARD_PATHS = {
     'mj-flight-stained': 'Artist Cards/Jared Emerson/Michael Jordan/MJ in Flight - Stained Glass',
     'mj-flight-space':   'Artist Cards/Jared Emerson/Michael Jordan/_Concept Designs - Move once confirmed',
 
-    # ── Other Jared cards ────────────────────────────────────────────────────
+    # ââ Other Jared cards ââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'lebron-legendary':  'Artist Cards/Jared Emerson/Lebron James',
     'shaq-dunk':         'Artist Cards/Jared Emerson/Shaq Dunk',
     'hardaway':          'Artist Cards/Jared Emerson/Hardaway',
@@ -62,28 +62,28 @@ CARD_PATHS = {
     'gng-dual':          'Artist Cards/Jared Emerson/GnG Dual Card - do we need these',
     'card-backs':        'Artist Cards/Jared Emerson',  # Card Back Designs.ai at root
 
-    # ── Athletic Art ────────────────────────────────────────────────────────
+    # ââ Athletic Art ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'neoleo': 'Artist Cards/Athletic Art SC/NeoLeo',
 
-    # ── Baseball ─────────────────────────────────────────────────────────────
+    # ââ Baseball âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'kerry-wood':   'Baseball/Kerry Wood',
     'roger-clemens':'Baseball',  # files at Baseball/ root
 
-    # ── Football ─────────────────────────────────────────────────────────────
+    # ââ Football âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'cam-skattebo':     'Football/Cam Skattebo',
     'josh-lego':        'Football',  # files at Football/ root
     'josh-puffs':       'Football/Josh Allen/MVP Puffs',
     'josh-playing-cards':'Football/Josh Allen/Playing Cards',
     'lee-smith':        'Football/Lee Smith',
 
-    # ── Graded Plates ────────────────────────────────────────────────────────
+    # ââ Graded Plates ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'plate-court-dreams': 'Graded Plates',  # both plates share this folder
     'plate-leather-goat': 'Graded Plates',
 
-    # ── Magical ──────────────────────────────────────────────────────────────
+    # ââ Magical ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'magical-card': 'Magical Cards',
 
-    # ── Micro Wrestling ──────────────────────────────────────────────────────
+    # ââ Micro Wrestling ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'micro-tiger':     'Micro Wrestling/MICRO TIGER',
     'syko':            'Micro Wrestling/SYKO',
     'pinky-shortcake': 'Micro Wrestling/Pinky Shortcake',
@@ -91,11 +91,11 @@ CARD_PATHS = {
     'baby-jesus':      'Micro Wrestling/Baby Jesus',
     'knate':           'Micro Wrestling/KNate the Knome',
 
-    # ── Philanthropic ────────────────────────────────────────────────────────
+    # ââ Philanthropic ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'betty-card':   'Philanthropic Projects',  # files at root
     'jake-kellehan':'Philanthropic Projects/First Order - Jake Kellehan',
 
-    # ── Derek Personal ───────────────────────────────────────────────────────
+    # ââ Derek Personal âââââââââââââââââââââââââââââââââââââââââââââââââââââââ
     'blades-brown':   'z_ Derek\'s Personal Projects',  # files at root
     'words-from-god': 'z_ Derek\'s Personal Projects/Derek',
     'erik-life-plan': 'z_ Derek\'s Personal Projects/Erik Life Plan Card',
@@ -116,7 +116,7 @@ CARD_PATHS = {
     'kid-projects':   'z_ Derek\'s Personal Projects/Kid Projects',
 }
 
-# ── HTTP helper ───────────────────────────────────────────────────────────────
+# ââ HTTP helper âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def http_post_json(url, headers, body):
     data = json.dumps(body).encode('utf-8')
     req = urllib.request.Request(url, data=data, headers=headers, method='POST')
@@ -125,7 +125,7 @@ def http_post_json(url, headers, body):
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         body = e.read()
-        raise RuntimeError(f'POST {url} → {e.code}: {body.decode("utf-8", errors="replace")}')
+        raise RuntimeError(f'POST {url} â {e.code}: {body.decode("utf-8", errors="replace")}')
 
 def http_get_json(url, headers):
     req = urllib.request.Request(url, headers=headers)
@@ -136,7 +136,7 @@ def http_get_json(url, headers):
         if e.code == 404:
             return None, 404
         body = e.read()
-        raise RuntimeError(f'GET {url} → {e.code}: {body.decode("utf-8", errors="replace")}')
+        raise RuntimeError(f'GET {url} â {e.code}: {body.decode("utf-8", errors="replace")}')
 
 def http_put_json(url, headers, body):
     data = json.dumps(body).encode('utf-8')
@@ -146,7 +146,7 @@ def http_put_json(url, headers, body):
             return json.loads(r.read())
     except urllib.error.HTTPError as e:
         body = e.read()
-        raise RuntimeError(f'PUT {url} → {e.code}: {body.decode("utf-8", errors="replace")}')
+        raise RuntimeError(f'PUT {url} â {e.code}: {body.decode("utf-8", errors="replace")}')
 
 def http_post_form(url, fields):
     data = urllib.parse.urlencode(fields).encode('utf-8')
@@ -155,7 +155,7 @@ def http_post_form(url, fields):
     with urllib.request.urlopen(req) as r:
         return json.loads(r.read())
 
-# ── Dropbox ───────────────────────────────────────────────────────────────────
+# ââ Dropbox âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def get_dbx_token():
     r = http_post_form('https://api.dropboxapi.com/oauth2/token', {
         'grant_type':    'refresh_token',
@@ -204,7 +204,7 @@ def detect_status(token, rel_path):
         return 'inprogress'
     return 'pending'
 
-# ── Status logic ──────────────────────────────────────────────────────────────
+# ââ Status logic ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def upgrade_status(current, detected):
     """Only upgrade, never downgrade. Protect onhold/archived."""
     if current in ('onhold', 'archived'):
@@ -219,7 +219,7 @@ def upgrade_status(current, detected):
         det_idx = 0
     return STATUS_ORDER[max(cur_idx, det_idx)]
 
-# ── GitHub ────────────────────────────────────────────────────────────────────
+# ââ GitHub ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 GH_HEADERS = {
     'Authorization': f'token {GH_TOKEN}',
     'Accept':        'application/vnd.github.v3+json',
@@ -248,7 +248,7 @@ def save_data_json(payload, sha):
     result = http_put_json(url, GH_HEADERS, body)
     return result['content']['sha']
 
-# ── Main ──────────────────────────────────────────────────────────────────────
+# ââ Main ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 def main():
     print('Getting Dropbox access token...')
     dbx_token = get_dbx_token()
@@ -270,7 +270,7 @@ def main():
         if upgraded != current:
             data[card_id]['status'] = upgraded
             changes.append((card_id, current, upgraded))
-            print(f'  UPGRADE  {card_id}: {current} → {upgraded}')
+            print(f'  UPGRADE  {card_id}: {current} â {upgraded}')
         else:
             print(f'  no change {card_id}: {current}')
 
@@ -280,9 +280,9 @@ def main():
         print(f'Saved! New SHA: {new_sha}')
         print('\nChanges:')
         for card_id, old, new in changes:
-            print(f'  {card_id}: {old} → {new}')
+            print(f'  {card_id}: {old} â {new}')
     else:
-        print('\nNo status changes — data.json unchanged.')
+        print('\nNo status changes â data.json unchanged.')
 
 if __name__ == '__main__':
     main()
