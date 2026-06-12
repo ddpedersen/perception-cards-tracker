@@ -48,7 +48,8 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 
 | Today | Under the key |
 |---|---|
-| Kobe Legendary - Gold (file: "Kobe Legendary Gold") | `Kobe Shirt Pull - Legendary - Gold - of2` ⚠ painting name TBD |
+| Kobe Legendary - Gold (file: "Kobe Legendary Gold") | `Kobe Shirt Pull - Legendary - Gold - of2` |
+| LeBron James - Legendary | `LeBron City Scape - Legendary` |
 | Kobe Legendary (base) | `Kobe Shirt Pull - Legendary - of10` *(if the base runs /10)* |
 | MJ in Flight - Leather GOAT 1/1 | `MJ in Flight - ?Parallel? - Leather GOAT - 1of1` ⚠ parallel TBD |
 | MJ in Flight - Angel Rare Air | `MJ in Flight - ?Parallel? - Angel Rare Air - 1of1` |
@@ -74,4 +75,4 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 
 Split the name on ` - `, then validate left to right: anchor must match a known painting or subject → parallel must be in `PARALLELS` → variant must be in that parallel's list → tier must match `1of1|ofN` → product in `{Plate, Box}`. A name that parses fills `parallel`/`variant` automatically; a name that doesn't gets a naming alert in the tracker instead of silent guessing.
 
-**Blocked on:** real painting names for the placeholder artworks ("Kobe Legendary" → e.g. *Kobe Shirt Pull*; "LeBron Legendary" → ?), and parallel assignments for the 8 MJ in Flight designs + Black Mamba Portrait group.
+**Blocked on:** parallel assignments for the 8 MJ in Flight designs + the Black Mamba Portrait group. (Painting names are settled: *Kobe Shirt Pull*, *LeBron City Scape* — the Dropbox/app renames can proceed any time.)
