@@ -110,9 +110,9 @@ Statuses **only upgrade** (pending→inprogress→complete). `onhold`/`archived`
 
 ## Current state (as of June 2026)
 
-- **67 designs** defined in `index.html`, across **10 categories**; **33 subjects**; **11 painting sets** (artwork tagged on all 23 artist designs + the Court Dreams graded plate).
+- **67 designs** defined in `index.html`, across **10 categories**; **33 subjects**; **11 painting sets** (artwork tagged on all 23 artist designs + 2 graded plates: Court Dreams, In-Flight Leather GOAT).
 - `data.json` has 66 entries (the 67th, `matt-empty`, defaults to pending): **~59 complete, 4 inprogress, 3 pending**.
-- **0/37 sets** currently complete (e.g. MJ in Flight 6/8; Black Mamba Portrait 4/8; Kobe Legendary 3/8). Painting names were inferred from design/folder naming — user should review/rename ("Kobe Legendary"/"LeBron Legendary" are confirmed placeholders).
+- **0/36 sets** currently complete (e.g. MJ in Flight 6/8; Black Mamba Portrait 4/8; Kobe Legendary 3/8). Painting names were inferred from design/folder naming — user should review/rename ("Kobe Legendary"/"LeBron Legendary" are confirmed placeholders).
 - **Parallels:** vocabulary has 1 parallel (Legendary, 4 variants, no tier defaults yet). `parallel` set on 8 designs (5 Kobe Legendary + LeBron + 2 soccer); `variant` set on those + the 8 MJ in Flight designs, which alert "missing parallel" by design (50 flagged designs total incl. naming alerts). Pending from Derek: painting names, fuller parallel/variant vocabulary (+ default tiers), MJ in Flight parallel assignments, then a **naming key** doc + sync parsing.
 - Sync pipeline operational; app loads cleanly, no JS errors.
 
