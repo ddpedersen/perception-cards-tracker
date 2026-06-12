@@ -136,6 +136,9 @@
 
   .flags { display: flex; flex-direction: column; gap: 3px; }
   .flag { font-size: 10px; color: var(--amber); background: var(--amber-bg); padding: 2px 7px; border-radius: 4px; border: 1px solid #4a2e00; line-height: 1.4; }
+  .rename-tmpl { font-family: ui-monospace, Consolas, monospace; font-size: 10px; background: rgba(255,255,255,.07); padding: 1px 5px; border-radius: 3px; color: #ffd479; user-select: all; }
+  .copy-btn { font-size: 9px; padding: 1px 6px; margin-left: 4px; border-radius: 3px; border: 1px solid #4a2e00; background: transparent; color: var(--amber); cursor: pointer; vertical-align: 1px; }
+  .copy-btn:hover { background: var(--amber-bg); }
 
   .expand-btn { font-size: 10px; color: var(--muted); background: none; border: none; cursor: pointer; text-align: left; padding: 0; }
   .expand-btn:hover { color: var(--text); }
@@ -492,7 +495,7 @@ const DESIGNS = [
   // ── Graded Plates ──
   { id:'plate-court-dreams', name:'Court Dreams Purple', category:'graded-plates', subject:'Kobe Bryant', artwork:'Court Dreams', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder','Graded plates may be single-sided – confirm'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'plate-leather-goat', name:'In-Flight Leather GOAT', category:'graded-plates', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+  { id:'plate-leather-goat', name:'In-Flight Leather GOAT', category:'graded-plates', subject:'Michael Jordan', artwork:'MJ in Flight', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Magical Cards ──
@@ -747,7 +750,10 @@ function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + p
 //  • design tier ≠ the variant's default tier (when the vocabulary defines one)
 function namingAlerts(d) {
   const out = [];
-  if (d.variant && !d.parallel) out.push(`Variant “${d.variant}” has no parallel — file/app name is missing the parallel level; set it here, then rename upstream`);
+  if (d.variant && !d.parallel) {
+    const tmpl = `${d.artwork || d.subject || d.name} - Parallel - ${d.variant}`;
+    out.push(`Variant “${d.variant}” has no parallel — set it here, then rename the file/app to: <span class="rename-tmpl">${tmpl}</span><button class="copy-btn" onclick="copyText('${tmpl.replace(/'/g, "\\'")}', this)">copy</button>`);
+  }
   if (d.parallel) {
     const p = PARALLELS.find(p => p.name === d.parallel);
     if (!p) out.push(`Parallel “${d.parallel}” isn’t in the PARALLELS vocabulary`);
@@ -761,6 +767,19 @@ function namingAlerts(d) {
   return out;
 }
 function issueCount(d) { return d.flags.length + namingAlerts(d).length; }
+function copyText(t, btn) {
+  const done = ok => { btn.textContent = ok ? '✓ copied' : '⚠ select & copy manually'; setTimeout(() => { btn.textContent = 'copy'; }, 1500); };
+  const fallback = () => {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove(); return ok;
+  };
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(t).then(() => done(true)).catch(() => done(fallback()));
+  } else done(fallback());
+}
 
 function matchesSearch(d) {
   if (!search) return true;
