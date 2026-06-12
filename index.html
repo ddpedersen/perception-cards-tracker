@@ -219,6 +219,32 @@
   .complete-tag.no { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
   .empty-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; }
 
+  /* Plan / matrix view */
+  .plan-legend { font-size: 11px; color: var(--muted); margin-bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
+  .plan-legend .pip { cursor: default; }
+  .mx-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table.matrix { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .matrix th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; font-size: 11px; border-bottom: 1px solid var(--border); white-space: nowrap; background: var(--surface); }
+  .matrix th.pcol { text-align: center; }
+  .matrix td { padding: 7px 10px; border-bottom: 1px solid var(--border); border-left: 1px solid var(--border); vertical-align: top; }
+  .matrix td.setcol { border-left: none; }
+  .matrix tr:hover td { background: var(--surface); }
+  .mx-set { font-weight: 700; color: var(--text); }
+  .mx-sub { font-size: 10px; color: var(--muted); font-weight: 500; }
+  .mx-on { background: rgba(46,160,67,0.04); }
+  .mx-cell-pips { display: flex; gap: 3px; flex-wrap: wrap; }
+  .vp { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
+  .vp-have { background: var(--green-bg); color: var(--green); }
+  .vp-cand { background: transparent; color: var(--muted); border: 1px dashed var(--border); }
+  .mx-dormant { color: var(--muted); font-size: 11px; }
+  .mx-cand-count { font-size: 9px; color: var(--muted); margin-top: 3px; }
+  .mx-unassigned { color: var(--amber); font-weight: 700; }
+  .mx-unassigned.zero { color: var(--border); font-weight: 400; }
+  .next-need { display: flex; gap: 4px; flex-wrap: wrap; }
+  .need-pip { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; background: var(--red-bg); color: #f87171; white-space: nowrap; }
+  .bar { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; min-width: 70px; }
+  .bar > span { display: block; height: 100%; background: var(--green); }
+
   /* Loading state */
   .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 500; }
   .loading-overlay.hidden { display: none; }
@@ -271,6 +297,7 @@
 
 <div class="view-tabs" id="viewTabs">
   <button class="view-tab" data-view="dashboard" onclick="setView('dashboard')">📊 Dashboard</button>
+  <button class="view-tab" data-view="plan" onclick="setView('plan')">🧭 Plan</button>
   <button class="view-tab active" data-view="table" onclick="setView('table')">📋 Designs</button>
   <button class="view-tab" data-view="grid" onclick="setView('grid')">🗂 Grid</button>
 </div>
@@ -848,6 +875,7 @@ function renderView() {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
   const main = document.getElementById('main');
   if (view === 'dashboard') main.innerHTML = dashboardHTML();
+  else if (view === 'plan') main.innerHTML = planHTML();
   else if (view === 'table') main.innerHTML = tableHTML();
   else main.innerHTML = gridHTML();
 }
@@ -1057,6 +1085,87 @@ function dashboardHTML() {
   </div>`;
 
   return tiles + setSection + seriesSection + catSection;
+}
+
+// ─── Plan view ("what to work on next") ───────────────────────────────────────
+// Two lenses: (A) finish what's started — incomplete sets ranked closest-first
+// with their missing tiers; (B) the painting × parallel matrix — green = made,
+// dashed = an open slot you could create next.
+function planHTML() {
+  const pool = scopedDesigns();
+  const reports = setsIn(pool).map(setReport);
+
+  // ── A. Closest to completing ──
+  const incomplete = reports.filter(r => !r.complete)
+    .sort((a, b) => (b.filledDesigns / b.targetDesigns) - (a.filledDesigns / a.targetDesigns) || (b.total - a.total) || a.name.localeCompare(b.name));
+  const completeCount = reports.filter(r => r.complete).length;
+  const TOP = 12;
+  const shown = incomplete.slice(0, TOP);
+  const nextRows = shown.map(r => {
+    const pct = Math.round(100 * r.filledDesigns / r.targetDesigns);
+    const needs = r.slots.filter(s => s.filled < s.count)
+      .map(s => `<span class="need-pip">need ${s.label}${s.count - s.filled > 1 ? ` ×${s.count - s.filled}` : ''}</span>`).join('');
+    const extras = r.extras.length ? `<span class="mx-sub">· ${r.extras.length} extra</span>` : '';
+    const untiered = r.untiered.length ? `<span class="mx-sub">· ${r.untiered.length} untiered</span>` : '';
+    return `<tr>
+      <td class="setcol"><span class="mx-set">${r.name}</span><div class="mx-sub">${r.artwork ? `🎨 ${r.subject}` : (CAT_LABEL[r.designs[0].category] || '')}</div></td>
+      <td style="min-width:120px"><div class="bar"><span style="width:${pct}%"></span></div><div class="mx-sub">${r.filledDesigns}/${r.targetDesigns} template designs ${extras}${untiered}</div></td>
+      <td><div class="next-need">${needs || '<span class="mx-sub">all template tiers filled — add extras only</span>'}</div></td>
+    </tr>`;
+  }).join('');
+  const moreNote = incomplete.length > TOP ? `<div class="mx-sub" style="margin-top:8px">+ ${incomplete.length - TOP} more in-progress sets — see Dashboard › By Set for the full list.</div>` : '';
+  const sectionA = `<div class="dash-section">
+    <div class="dash-h">Closest to completing <span>finish what's started · ${completeCount}/${reports.length} sets complete</span></div>
+    <div class="mx-wrap"><table class="matrix">
+      <thead><tr><th class="setcol">Set</th><th>Progress</th><th>Missing tiers to finish</th></tr></thead>
+      <tbody>${nextRows || `<tr><td colspan="3" class="mx-sub">No sets in scope.</td></tr>`}</tbody>
+    </table></div>${moreNote}
+  </div>`;
+
+  // ── B. Parallel × painting matrix ──
+  const mxRows = reports.filter(r => r.artwork || r.designs.some(d => d.parallel))
+    .sort((a, b) => (b.designs.filter(d => d.parallel).length - a.designs.filter(d => d.parallel).length) || (b.total - a.total) || a.name.localeCompare(b.name));
+
+  const cell = (r, P) => {
+    const inCell = r.designs.filter(d => d.parallel === P.name);
+    const names = ['base', ...P.variants.map(v => v.name)];
+    if (!inCell.length) {
+      return `<td><span class="mx-dormant" title="No ${P.name} here yet — could start: ${names.join(', ')}">—<div class="mx-cand-count">${names.length} possible</div></span></td>`;
+    }
+    const present = new Set(inCell.map(d => d.variant || 'base'));
+    const chips = names.map(n => {
+      const have = present.has(n);
+      return `<span class="vp ${have ? 'vp-have' : 'vp-cand'}" title="${have ? 'made' : 'candidate — make next'}">${n}</span>`;
+    }).join('');
+    const cand = names.filter(n => !present.has(n)).length;
+    return `<td class="mx-on"><div class="mx-cell-pips">${chips}</div>${cand ? `<div class="mx-cand-count">${cand} to make</div>` : `<div class="mx-cand-count" style="color:var(--green)">line complete</div>`}</td>`;
+  };
+  const unassignedCell = (r) => {
+    const noP = r.designs.filter(d => !d.parallel);
+    if (!noP.length) return `<td><span class="mx-unassigned zero">—</span></td>`;
+    const flagged = noP.filter(d => d.variant).length;
+    return `<td><span class="mx-unassigned" title="${noP.map(d => d.name).join(', ')}">${noP.length}${flagged ? ' ⚠' : ''}</span><div class="mx-cand-count">${flagged ? flagged + ' need a parallel' : 'no parallel'}</div></td>`;
+  };
+  const matrixRows = mxRows.map(r => `<tr>
+    <td class="setcol"><span class="mx-set">${r.name}</span><div class="mx-sub">${r.artwork ? `🎨 ${r.subject}` : (CAT_LABEL[r.designs[0].category] || '')}</div></td>
+    ${PARALLELS.map(P => cell(r, P)).join('')}
+    ${unassignedCell(r)}
+  </tr>`).join('');
+  const sectionB = `<div class="dash-section">
+    <div class="dash-h">Parallel coverage — what to make next <span>each painting × parallel · fills in as the vocabulary grows</span></div>
+    <div class="plan-legend">
+      <span><span class="vp vp-have">made</span> already created</span>
+      <span><span class="vp vp-cand">slot</span> candidate — could make next</span>
+      <span><span class="mx-unassigned">N ⚠</span> designs needing a parallel assigned</span>
+    </div>
+    <div class="mx-wrap"><table class="matrix">
+      <thead><tr><th class="setcol">Set</th>${PARALLELS.map(P => `<th class="pcol">${P.name}</th>`).join('')}<th class="pcol">No parallel</th></tr></thead>
+      <tbody>${matrixRows || `<tr><td colspan="${PARALLELS.length + 2}" class="mx-sub">No paintings or parallels in scope yet.</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+
+  const intro = `<div class="dash-section" style="margin-bottom:18px"><div class="mx-sub">Two questions: <b style="color:var(--text)">what's almost done</b> (finish the set) and <b style="color:var(--text)">what doesn't exist yet</b> (open slots in the matrix).</div></div>`;
+  return intro + sectionA + sectionB;
 }
 
 // ─── Grid view (original card layout) ─────────────────────────────────────────
