@@ -334,94 +334,103 @@ const CATEGORIES = [
 ];
 const CAT_LABEL = Object.fromEntries(CATEGORIES.map(c => [c.id, c.label]));
 
-// ─── Subject completeness template (the "24-card set" target) ──────────────────
-// Default per-subject target. Serials sum to 24 across 8 designs.
-// Per-subject overrides let a subject extend past 24 (or run smaller).
-const SUBJECT_TEMPLATE_DEFAULT = [
+// ─── Set completeness template (the default "24-card set" target) ──────────────
+// A SET is the unit of completeness:
+//   • Artist cards: one set per PAINTING (design.artwork). A subject can have
+//     several paintings, each building toward its own set — e.g. Jordan's
+//     Portrait painting and his In-Flight painting are two separate sets.
+//   • Everything else: one set per subject (artwork stays null).
+// Default target: serials sum to 24 across 8 designs.
+const SET_TEMPLATE_DEFAULT = [
   { limit: 10, count: 1, label: '/10'  },
   { limit: 5,  count: 1, label: '/5'   },
   { limit: 3,  count: 1, label: '/3'   },
   { limit: 2,  count: 1, label: '/2'   },
   { limit: 1,  count: 4, label: '1/1'  },
 ];
-const SUBJECT_TEMPLATE_OVERRIDES = {
-  // 'Michael Jordan': [ { limit:25,count:1,label:'/25' }, ...extend here... ],
+// Per-set size overrides — key by artwork title (painting sets) or subject name
+// (subject sets). Lets a favorite painting run a bigger set and a hard one smaller:
+//   'MJ in Flight':  [ { limit:10,count:2,label:'/10' }, ... ],   // e.g. 30-card set
+//   'Court Dreams':  [ { limit:5,count:1,label:'/5' }, { limit:1,count:2,label:'1/1' } ],  // e.g. 7-card set
+const SET_TEMPLATE_OVERRIDES = {
 };
-function templateFor(subject) { return SUBJECT_TEMPLATE_OVERRIDES[subject] || SUBJECT_TEMPLATE_DEFAULT; }
+function templateFor(set) { return SET_TEMPLATE_OVERRIDES[set.artwork || set.subject] || SET_TEMPLATE_DEFAULT; }
 
 // ─── Designs ───────────────────────────────────────────────────────────────────
-// Flat list. Each design: category(1) · subject(athlete/person) · series(release; rolls
-// up from the design's cards — empty until scraped) · signature · thumb · file/print data.
+// Flat list. Each design: category(1) · subject(athlete/person) · artwork(source
+// painting — artist cards only; groups designs into per-painting sets; user-
+// maintained, NOT scraped) · series(release; rolls up from the design's cards —
+// empty until scraped) · signature · thumb · file/print data.
 const DESIGNS = [
   // ── Artist Cards – Jared Emerson · Kobe Bryant ──
-  { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+  { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1', category:'artist-jared', subject:'Kobe Bryant', series:'Release Day Series', signature:null, thumb:null,
+  { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Kobe Legendary - Angel', printLimit:1, printedAuto:1 },
-  { id:'kobe-legendary-gold', name:'Kobe Legendary – Gold of2', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-gold', name:'Kobe Legendary – Gold of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Gold', printLimit:2, printedAuto:2 },
-  { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
-  { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'], appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
-  { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'], appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
-  { id:'kobe-chrome-plate', name:'Portrait – Chrome 1of2 · Graded Plate', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+  { id:'kobe-chrome-plate', name:'Portrait – Chrome 1of2 · Graded Plate', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'kobe-plastic-holo', name:'Portrait – Plastic Holo', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-plastic-holo', name:'Portrait – Plastic Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:'Black Mamba - Satin Holographic', printLimit:10, printedAuto:10,
     appNameNote:'File: "Plastic Holo" / App: "Satin Holographic" – confirm same design' },
-  { id:'kobe-snake-print', name:'Portrait – Snake Print', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-snake-print', name:'Portrait – Snake Print', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:true,  back:true,  flags:['No .ai source file'], appDesign:'Black Mamba - Holographic Snake', printLimit:5, printedAuto:5,
     appNameNote:'File: "Snake Print" / App: "Holographic Snake" – confirm same design' },
-  { id:'kobe-snakeskin', name:'Portrait – Snake Skin 1of1', category:'artist-jared', subject:'Kobe Bryant', series:'Crown Collection', signature:null, thumb:null,
+  { id:'kobe-snakeskin', name:'Portrait – Snake Skin 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Crown Collection', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['3 .ai files (Front, Back, Plate) – consider consolidating to 1'], appDesign:'Black Mamba on Snake Skin', printLimit:1, printedAuto:0 },
-  { id:'kobe-snakeskin-box', name:'Portrait – Snake Skin 1of1 · Custom Box', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+  { id:'kobe-snakeskin-box', name:'Portrait – Snake Skin 1of1 · Custom Box', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Only unlabeled tiled PDF (box may be single-sided, confirm)'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'kobe-court-dreams', name:'Court Dreams', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-court-dreams', name:'Court Dreams', category:'artist-jared', subject:'Kobe Bryant', artwork:'Court Dreams', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Folder is in Kobe Bryant but design features LeBron (Lebron Laying down - Gigi Shoe)','Move file to correct location'], appDesign:'Court Dreams - Purple 1/1', printLimit:1, printedAuto:1 },
 
   // ── Artist Cards – Jared Emerson · Michael Jordan ──
-  { id:'mj-portrait', name:'Jordan Portrait', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-portrait', name:'Jordan Portrait', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ Portrait', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Folder contains 2 separate designs (Jordan Portrait + Jordan/Kobe Dual) – consider splitting'], appDesign:'MJ Portrait - Copper', printLimit:10, printedAuto:10 },
-  { id:'mj-kobe-dual', name:'Jordan/Kobe Dual Portrait', category:'artist-jared', subject:'Jordan & Kobe (dual)', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-kobe-dual', name:'Jordan/Kobe Dual Portrait', category:'artist-jared', subject:'Jordan & Kobe (dual)', artwork:'Jordan/Kobe Dual', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'], appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
-  { id:'mj-portrait-gold', name:'Jordan Portrait – of1 Gold', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-portrait-gold', name:'Jordan Portrait – of1 Gold', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
-  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'], appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
     appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
-  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
-  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Artist Cards – Jared Emerson · Other ──
-  { id:'lebron-legendary', name:'LeBron James – Legendary', category:'artist-jared', subject:'LeBron James', series:'', signature:null, thumb:null,
+  { id:'lebron-legendary', name:'LeBron James – Legendary', category:'artist-jared', subject:'LeBron James', artwork:'LeBron Legendary', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF','2 Front PDFs (Legendary + Stripe variant)'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'shaq-dunk', name:'Shaq Dunk', category:'artist-jared', subject:'Shaquille O\'Neal', series:'', signature:null, thumb:null,
+  { id:'shaq-dunk', name:'Shaq Dunk', category:'artist-jared', subject:'Shaquille O\'Neal', artwork:'Shaq Dunk', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'hardaway', name:'Hardaway Pass', category:'artist-jared', subject:'Penny Hardaway', series:'', signature:null, thumb:null,
+  { id:'hardaway', name:'Hardaway Pass', category:'artist-jared', subject:'Penny Hardaway', artwork:'Hardaway Pass', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'dual-orlando', name:'Dual Orlando', category:'artist-jared', subject:'Shaq & Penny (dual)', series:'', signature:null, thumb:null,
+  { id:'dual-orlando', name:'Dual Orlando', category:'artist-jared', subject:'Shaq & Penny (dual)', artwork:'Dual Orlando', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'gng-dual', name:'GnG Dual (Jordan/Kobe)', category:'artist-jared', subject:'Jordan & Kobe (dual)', series:'Release Day Series', signature:null, thumb:null,
+  { id:'gng-dual', name:'GnG Dual (Jordan/Kobe)', category:'artist-jared', subject:'Jordan & Kobe (dual)', artwork:'Jordan/Kobe Dual', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Folder name says "do we need these" – confirm if still needed'], appDesign:'Dual MJ & Kobe Art Card - Gold 1/1', printLimit:1, printedAuto:1 },
   { id:'card-backs', name:'Card Back Designs (template)', category:'artist-jared', subject:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Template .ai at Jared Emerson root – not in a design subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Artist Cards – Athletic Art SC ──
-  { id:'neoleo', name:'NeoLeo (Leonardo)', category:'artist-athletic', subject:'Leonardo (NeoLeo)', series:'Jon Caneda Collection 1', signature:null, thumb:null,
+  { id:'neoleo', name:'NeoLeo (Leonardo)', category:'artist-athletic', subject:'Leonardo (NeoLeo)', artwork:'NeoLeo', series:'Jon Caneda Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Neo Leo - Holo of 10', printLimit:10, printedAuto:10 },
 
   // ── Baseball ──
@@ -459,7 +468,7 @@ const DESIGNS = [
     ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Graded Plates ──
-  { id:'plate-court-dreams', name:'Court Dreams Purple', category:'graded-plates', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+  { id:'plate-court-dreams', name:'Court Dreams Purple', category:'graded-plates', subject:'Kobe Bryant', artwork:'Court Dreams', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder','Graded plates may be single-sided – confirm'], appDesign:null, printLimit:null, printedAuto:0 },
   { id:'plate-leather-goat', name:'In-Flight Leather GOAT', category:'graded-plates', subject:'Michael Jordan', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
@@ -711,7 +720,7 @@ function statusMeta(s) { return s === 'printing' ? PRINTING : STATUS[s]; }
 function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + pl); }
 function matchesSearch(d) {
   if (!search) return true;
-  const hay = [d.name, d.subject || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
+  const hay = [d.name, d.subject || '', d.artwork || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
   return hay.includes(search);
 }
 // Designs in the current category scope (ignores status filter) — for the dashboard.
@@ -729,10 +738,22 @@ function visibleDesigns() {
   });
 }
 
-// ─── Subject completeness (the "24-card set" report) ──────────────────────────
-function subjectReport(subject, pool) {
-  const designs = pool.filter(d => d.subject === subject);
-  const tmpl = templateFor(subject);
+// ─── Set completeness (the per-set tier report) ───────────────────────────────
+// A set = subject + artwork (painting sets) or just subject (everything else).
+// Designs with subject:null (e.g. card-backs template) belong to no set.
+function setsIn(pool) {
+  const map = new Map();
+  pool.forEach(d => {
+    if (!d.subject) return;
+    const key = d.subject + (d.artwork ? '|' + d.artwork : '');
+    if (!map.has(key)) map.set(key, { key, subject: d.subject, artwork: d.artwork || null, name: d.artwork || d.subject, designs: [] });
+    map.get(key).designs.push(d);
+  });
+  return [...map.values()];
+}
+function setReport(set) {
+  const designs = set.designs;
+  const tmpl = templateFor(set);
   const byLimit = {};         // limit -> [designs]
   const untiered = [];        // printLimit === null
   designs.forEach(d => {
@@ -748,10 +769,11 @@ function subjectReport(subject, pool) {
   Object.keys(byLimit).forEach(l => { if (!tmplLimits.has(Number(l))) extras.push(...byLimit[l]); });
   slots.forEach(s => { if (s.over > 0) extras.push(...(byLimit[s.limit] || []).slice(s.count)); });
   const targetDesigns = tmpl.reduce((a, t) => a + t.count, 0);
+  const targetCards = tmpl.reduce((a, t) => a + t.limit * t.count, 0);
   const filledDesigns = slots.reduce((a, s) => a + s.filled, 0);
   const complete = slots.every(s => s.filled >= s.count);
   const designComplete = designs.filter(d => effectiveStatus(d) === 'complete').length;
-  return { subject, designs, slots, extras, untiered, targetDesigns, filledDesigns, complete, designComplete, total: designs.length };
+  return { ...set, slots, extras, untiered, targetDesigns, targetCards, filledDesigns, complete, designComplete, total: designs.length };
 }
 
 // ─── Render dispatch ──────────────────────────────────────────────────────────
@@ -831,7 +853,7 @@ function tableHTML() {
           <div class="d-name" onclick="toggleNote('${d.id}')">${d.name} ${flagDot}</div>
           ${d.appDesign ? `<div class="d-app">App: ${d.appDesign}</div>` : ''}
         </td>
-        <td class="d-sub">${d.subject || '—'}</td>
+        <td class="d-sub">${d.subject || '—'}${d.artwork ? `<div title="Source painting">🎨 ${d.artwork}</div>` : ''}</td>
         <td class="d-sub">${d.series || '—'}</td>
         <td class="d-sub">${d.signature || '—'}</td>
         <td><span class="tier-chip ${isLimited?'':'none'}">${tierLabel(d.printLimit)}</span></td>
@@ -877,45 +899,46 @@ function toggleNote(id) {
 function dashboardHTML() {
   const pool = scopedDesigns();
   const subjects = [...new Set(pool.filter(d => d.subject).map(d => d.subject))];
-  const reports = subjects.map(s => subjectReport(s, pool))
-    .sort((a, b) => (b.filledDesigns - a.filledDesigns) || (b.total - a.total) || a.subject.localeCompare(b.subject));
+  const reports = setsIn(pool).map(setReport)
+    .sort((a, b) => (b.filledDesigns - a.filledDesigns) || (b.total - a.total) || a.name.localeCompare(b.name));
 
   const statusCount = { complete:0, inprogress:0, printing:0, pending:0, onhold:0, archived:0 };
   pool.forEach(d => { const st = effectiveStatus(d); statusCount[st] = (statusCount[st]||0) + 1; });
-  const subjectsComplete = reports.filter(r => r.complete).length;
+  const setsComplete = reports.filter(r => r.complete).length;
 
   // Tiles
   const tiles = `<div class="dash-tiles">
     <div class="tile accent"><div class="tile-num">${pool.length}</div><div class="tile-label">Designs</div></div>
     <div class="tile"><div class="tile-num">${subjects.length}</div><div class="tile-label">Subjects / Players</div></div>
-    <div class="tile green"><div class="tile-num">${subjectsComplete}<small> / ${subjects.length}</small></div><div class="tile-label">Sets Complete (24)</div></div>
+    <div class="tile green"><div class="tile-num">${setsComplete}<small> / ${reports.length}</small></div><div class="tile-label">Sets Complete</div></div>
     <div class="tile green"><div class="tile-num">${statusCount.complete}</div><div class="tile-label">Designs Complete</div></div>
     <div class="tile"><div class="tile-num" style="color:#7cc4ff">${statusCount.printing}</div><div class="tile-label">Printing</div></div>
     <div class="tile amber"><div class="tile-num">${statusCount.inprogress}</div><div class="tile-label">In Progress</div></div>
     <div class="tile"><div class="tile-num">${statusCount.pending}</div><div class="tile-label">Pending</div></div>
   </div>`;
 
-  // By subject (completeness scorecard)
-  const subjRows = reports.map(r => {
+  // By set (completeness scorecard — one row per painting for artist cards, per subject otherwise)
+  const setRows = reports.map(r => {
     const pips = r.slots.map(s => {
       const ok = s.filled >= s.count;
       const extra = s.over > 0 ? ` +${s.over}` : '';
       return `<span class="pip ${ok?'pip-ok':'pip-miss'}" title="${s.label}: have ${s.have}, need ${s.count}">${s.label} ${s.filled}/${s.count}${extra}</span>`;
     }).join('');
     const cats = [...new Set(r.designs.map(d => CAT_LABEL[d.category]))].join(', ');
+    const subLine = r.artwork ? `🎨 Painting · ${r.subject} · ${cats}` : cats;
     return `<tr>
-      <td><b>${r.subject}</b><div class="d-sub">${cats}</div></td>
+      <td><b>${r.name}</b><div class="d-sub">${subLine}</div></td>
       <td class="num">${r.total}</td>
       <td><div class="pips">${pips}</div>${r.extras.length?`<div class="d-sub" style="margin-top:4px">Extras: ${r.extras.map(d=>tierLabel(d.printLimit)).join(', ')}</div>`:''}${r.untiered.length?`<div class="d-sub">Untiered: ${r.untiered.length}</div>`:''}</td>
       <td class="num">${r.designComplete}/${r.total}</td>
-      <td><span class="complete-tag ${r.complete?'yes':'no'}">${r.complete?'✓ Complete':r.filledDesigns+'/'+r.targetDesigns}</span></td>
+      <td><span class="complete-tag ${r.complete?'yes':'no'}">${r.complete?'✓ Complete':r.filledDesigns+'/'+r.targetDesigns}</span><div class="d-sub" style="margin-top:4px">${r.targetCards}-card set</div></td>
     </tr>`;
   }).join('');
-  const subjSection = `<div class="dash-section">
-    <div class="dash-h">By Subject <span>completeness vs the 24-card template (/10 · /5 · /3 · /2 · 1/1×4)</span></div>
+  const setSection = `<div class="dash-section">
+    <div class="dash-h">By Set <span>artist cards: one set per painting · everything else: per subject · default 24-card template (/10 · /5 · /3 · /2 · 1/1×4)</span></div>
     <table class="rollup">
-      <thead><tr><th>Subject</th><th class="num">Designs</th><th>Tier coverage</th><th class="num">Done</th><th>Set</th></tr></thead>
-      <tbody>${subjRows || `<tr><td colspan="5" class="d-sub">No subjects in scope.</td></tr>`}</tbody>
+      <thead><tr><th>Set</th><th class="num">Designs</th><th>Tier coverage</th><th class="num">Done</th><th>Progress</th></tr></thead>
+      <tbody>${setRows || `<tr><td colspan="5" class="d-sub">No sets in scope.</td></tr>`}</tbody>
     </table>
   </div>`;
 
@@ -963,7 +986,7 @@ function dashboardHTML() {
     </table>
   </div>`;
 
-  return tiles + subjSection + seriesSection + catSection;
+  return tiles + setSection + seriesSection + catSection;
 }
 
 // ─── Grid view (original card layout) ─────────────────────────────────────────

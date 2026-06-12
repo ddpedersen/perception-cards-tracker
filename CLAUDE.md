@@ -30,25 +30,28 @@ A single-page web app for tracking the design/production status of custom tradin
 - **Runtime data** (status, notes, printed count) loads from `data.json` via the GitHub Contents API using a PAT stored in localStorage. Save writes back via the same API. The PAT is entered once and saved to the browser.
 
 ### Designs vs. cards (mirrors the user's web-app DB)
-- **Design** = the artwork = a row in `DESIGNS`. Carries `category` (1), `subject` (1), `series`, `signature`, `thumb`, plus file/print fields.
+- **Design** = a card layout = a row in `DESIGNS`. Carries `category` (1), `subject` (1), `artwork` (0-1), `series`, `signature`, `thumb`, plus file/print fields.
 - **Card** = a serialized physical instance (lives in the user's app DB, **not** modeled individually here). A card has exactly **one** series; a design rolls up to one-or-more series from its cards.
 
-### The three dimensions
+### The four dimensions
 | Dimension | Behaves like | Membership |
 |-----------|--------------|------------|
 | **Category** | hard filter | each design in exactly **one** (`CATEGORIES` config) |
-| **Subject** | the athlete/person | one per design; **the unit completeness is measured against** |
+| **Subject** | the athlete/person | one per design |
+| **Artwork** | the source painting (artist cards only) | one per design or null; **when set, the unit completeness is measured against** |
 | **Series** | the release tag | rolls up from the design's cards; empty until scraped |
 
+**Sets (completeness unit):** artist-card designs derive from a *painting* (`artwork`), and each painting builds toward its own set — e.g. Jordan's *MJ Portrait* and *MJ in Flight* paintings are two separate sets, each with its own template. Non-artist designs keep the subject as the set. Set key = `subject + '|' + artwork` (or just `subject` when `artwork` is null); sets span categories (the Court Dreams graded plate joins the Court Dreams painting set). `artwork` is **user-maintained knowledge** (not in the printing app, not scraped) — unlike `series`/`signature`/`thumb`, it's fine to edit by hand.
+
 ### Views (header tabs)
-- **Dashboard** — tiles (Designs · Subjects · **Sets Complete /24** · status counts), a **By-Subject** completeness scorecard (tier pips vs. the template), **By-Series** rollup (players/designs per release), **By-Category** rollup.
-- **Designs** — detail table: thumb · name · subject · series · signature · tier · printed · status · files · flags. Category dropdown + status filters + search. Row name expands flags/notes.
+- **Dashboard** — tiles (Designs · Subjects · **Sets Complete** · status counts), a **By-Set** completeness scorecard (one row per painting for artist cards, per subject otherwise; tier pips vs. that set's template), **By-Series** rollup (players/designs per release), **By-Category** rollup.
+- **Designs** — detail table: thumb · name · subject (+🎨 painting) · series · signature · tier · printed · status · files · flags. Category dropdown + status filters + search (searches artwork too). Row name expands flags/notes.
 - **Grid** — the original card layout (preserved).
 
-### Subject completeness template (the "24-card set")
-- `SUBJECT_TEMPLATE_DEFAULT` = `/10×1 · /5×1 · /3×1 · /2×1 · 1/1×4` → 8 designs / 24 serialized cards.
-- Per-subject overrides via `SUBJECT_TEMPLATE_OVERRIDES` (a subject may extend past 24).
-- A subject's designs are bucketed by `printLimit`; tiers are scored filled/missing/over. Off-template runs (e.g. `/50`) → **extras**; `printLimit: null` → **untiered**.
+### Set completeness template (the "24-card set")
+- `SET_TEMPLATE_DEFAULT` = `/10×1 · /5×1 · /3×1 · /2×1 · 1/1×4` → 8 designs / 24 serialized cards.
+- Per-set size overrides via `SET_TEMPLATE_OVERRIDES`, **keyed by artwork title** (painting sets) or subject name (subject sets) — one painting can run a 30-card set, another a 12-card set.
+- `setsIn(pool)` groups designs into sets; `setReport(set)` buckets them by `printLimit`; tiers are scored filled/missing/over. Off-template runs (e.g. `/50`) → **extras**; `printLimit: null` → **untiered**. `templateFor(set)` looks up `set.artwork || set.subject`.
 
 ### Data (`data.json`)
 Schema per design entry (**unchanged** by the new fields):
@@ -63,7 +66,7 @@ Schema per design entry (**unchanged** by the new fields):
 ```
 - `status` is the only field the sync writes. `notes`/`printed` are user-managed.
 - Every entry **must** have a `status` field — a missing status crashes the renderer. (Designs absent from `data.json`, like `matt-empty`, default to `pending` in-app.)
-- `category` / `subject` / `series` / `signature` / `thumb` live **only in `index.html`** (design-level), not in `data.json`.
+- `category` / `subject` / `artwork` / `series` / `signature` / `thumb` live **only in `index.html`** (design-level), not in `data.json`.
 
 ### Status rules
 | Status | Meaning | Source |
@@ -105,9 +108,9 @@ Statuses **only upgrade** (pending→inprogress→complete). `onhold`/`archived`
 
 ## Current state (as of June 2026)
 
-- **67 designs** defined in `index.html`, across **10 categories**; **33 subjects**.
+- **67 designs** defined in `index.html`, across **10 categories**; **33 subjects**; **11 painting sets** (artwork tagged on all 23 artist designs + the Court Dreams graded plate).
 - `data.json` has 66 entries (the 67th, `matt-empty`, defaults to pending): **~59 complete, 4 inprogress, 3 pending**.
-- **0/33 subjects** currently hit a complete 24-card set (e.g. Kobe 7/8 — missing a `/3`; MJ 6/8 — missing `/5` and `/2`).
+- **0/37 sets** currently complete (e.g. MJ in Flight 6/8; Black Mamba Portrait 4/8; Kobe Legendary 3/8). Painting names were inferred from design/folder naming — user should review/rename.
 - Sync pipeline operational; app loads cleanly, no JS errors.
 
 ### Known technical debt
@@ -151,7 +154,8 @@ Each object in the `DESIGNS` array:
   id: 'kobe-legendary',          // matches data.json key AND sync.py CARD_PATHS key
   name: 'Kobe Legendary (base)',
   category: 'artist-jared',      // one of the CATEGORIES ids
-  subject: 'Kobe Bryant',        // athlete/person, or null — drives completeness
+  subject: 'Kobe Bryant',        // athlete/person, or null (null = in no set)
+  artwork: 'Kobe Legendary',     // source painting (artist cards) — drives per-painting sets; null elsewhere
   series: '',                    // release; empty until scraped
   signature: null,               // 'Artist' | 'Designer' | 'Player-Subject' | null
   thumb: null,                   // image URL; null until scraped
