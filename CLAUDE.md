@@ -30,7 +30,7 @@ A single-page web app for tracking the design/production status of custom tradin
 - **Runtime data** (status, notes, printed count) loads from `data.json` via the GitHub Contents API using a PAT stored in localStorage. Save writes back via the same API. The PAT is entered once and saved to the browser.
 
 ### Designs vs. cards (mirrors the user's web-app DB)
-- **Design** = a card layout = a row in `DESIGNS`. Carries `category` (1), `subject` (1), `artwork` (0-1), `series`, `signature`, `thumb`, plus file/print fields.
+- **Design** = a card layout = a row in `DESIGNS`. Carries `category` (1), `subject` (1), `artwork` (0-1), `parallel` (0-1), `variant` (0-1), `series`, `signature`, `thumb`, plus file/print fields.
 - **Card** = a serialized physical instance (lives in the user's app DB, **not** modeled individually here). A card has exactly **one** series; a design rolls up to one-or-more series from its cards.
 
 ### The four dimensions
@@ -43,9 +43,11 @@ A single-page web app for tracking the design/production status of custom tradin
 
 **Sets (completeness unit):** artist-card designs derive from a *painting* (`artwork`), and each painting builds toward its own set — e.g. Jordan's *MJ Portrait* and *MJ in Flight* paintings are two separate sets, each with its own template. Non-artist designs keep the subject as the set. Set key = `subject + '|' + artwork` (or just `subject` when `artwork` is null); sets span categories (the Court Dreams graded plate joins the Court Dreams painting set). `artwork` is **user-maintained knowledge** (not in the printing app, not scraped) — unlike `series`/`signature`/`thumb`, it's fine to edit by hand.
 
+**Parallels & variants:** the full hierarchy is *Subject → Painting → Parallel → Variant (→ Tier)*. A **parallel** is a treatment line that recurs across paintings/subjects/categories (e.g. Legendary — found on Kobe, LeBron, and Derek's soccer cards). A **variant** is a flat-string sub-treatment within one parallel (Legendary → Gold, Scoreboard, Angel, Silver Holo); **no sub-variants** — "Angel Rare Air" is one variant. Each parallel has its own variant list (`PARALLELS` config); a variant's `tier` is a **soft default** ("Gold is usually /3") used only for mismatch alerts. Like `artwork`, `parallel`/`variant` are user-maintained in the tracker (source of truth). **Naming alerts** (`namingAlerts(d)`, derived at render — never stored in `flags`) fire when: a variant has no parallel (file/app name skipped the parallel level — true for all 8 *MJ in Flight* designs), the parallel/variant isn't in the vocabulary, or the design's `printLimit` differs from the variant's default tier. They count toward the Issues filter via `issueCount(d)`. ⚠ "Kobe Legendary"/"LeBron Legendary" `artwork` values are **placeholders** — Legendary is the *parallel*; the actual paintings were never named (Derek will supply names, e.g. "Kobe Shirt Pull"). Planned: once the naming convention is final, the sync will parse well-named files and auto-fill parallel/variant.
+
 ### Views (header tabs)
 - **Dashboard** — tiles (Designs · Subjects · **Sets Complete** · status counts), a **By-Set** completeness scorecard (one row per painting for artist cards, per subject otherwise; tier pips vs. that set's template), **By-Series** rollup (players/designs per release), **By-Category** rollup.
-- **Designs** — detail table: thumb · name · subject (+🎨 painting) · series · signature · tier · printed · status · files · flags. Category dropdown + status filters + search (searches artwork too). Row name expands flags/notes.
+- **Designs** — detail table: thumb · name · subject (+🎨 painting) · parallel › variant (amber ⚠ when variant lacks a parallel) · series · signature · tier · printed · status · files · flags. Category dropdown + status filters + search (searches artwork/parallel/variant too). Row name expands flags/notes/naming alerts.
 - **Grid** — the original card layout (preserved).
 
 ### Set completeness template (the "24-card set")
@@ -66,7 +68,7 @@ Schema per design entry (**unchanged** by the new fields):
 ```
 - `status` is the only field the sync writes. `notes`/`printed` are user-managed.
 - Every entry **must** have a `status` field — a missing status crashes the renderer. (Designs absent from `data.json`, like `matt-empty`, default to `pending` in-app.)
-- `category` / `subject` / `artwork` / `series` / `signature` / `thumb` live **only in `index.html`** (design-level), not in `data.json`.
+- `category` / `subject` / `artwork` / `parallel` / `variant` / `series` / `signature` / `thumb` live **only in `index.html`** (design-level), not in `data.json`.
 
 ### Status rules
 | Status | Meaning | Source |
@@ -110,7 +112,8 @@ Statuses **only upgrade** (pending→inprogress→complete). `onhold`/`archived`
 
 - **67 designs** defined in `index.html`, across **10 categories**; **33 subjects**; **11 painting sets** (artwork tagged on all 23 artist designs + the Court Dreams graded plate).
 - `data.json` has 66 entries (the 67th, `matt-empty`, defaults to pending): **~59 complete, 4 inprogress, 3 pending**.
-- **0/37 sets** currently complete (e.g. MJ in Flight 6/8; Black Mamba Portrait 4/8; Kobe Legendary 3/8). Painting names were inferred from design/folder naming — user should review/rename.
+- **0/37 sets** currently complete (e.g. MJ in Flight 6/8; Black Mamba Portrait 4/8; Kobe Legendary 3/8). Painting names were inferred from design/folder naming — user should review/rename ("Kobe Legendary"/"LeBron Legendary" are confirmed placeholders).
+- **Parallels:** vocabulary has 1 parallel (Legendary, 4 variants, no tier defaults yet). `parallel` set on 8 designs (5 Kobe Legendary + LeBron + 2 soccer); `variant` set on those + the 8 MJ in Flight designs, which alert "missing parallel" by design (50 flagged designs total incl. naming alerts). Pending from Derek: painting names, fuller parallel/variant vocabulary (+ default tiers), MJ in Flight parallel assignments, then a **naming key** doc + sync parsing.
 - Sync pipeline operational; app loads cleanly, no JS errors.
 
 ### Known technical debt
@@ -121,11 +124,13 @@ Statuses **only upgrade** (pending→inprogress→complete). `onhold`/`archived`
 
 ## Local dev workflow
 
+⚠️ **Don't `git push` without Derek's explicit approval.** Pushing deploys the live site (~30s). Commit locally, demo the change on the localhost preview, and ask before pushing.
+
 ```bash
 # No build step. Edit index.html and open in a browser.
 # GitHub load/save needs the live Pages URL or a local server + valid PAT.
 
-# Push to deploy (Pages updates in ~30 seconds)
+# Push to deploy (Pages updates in ~30 seconds) — ONLY after Derek approves
 git add index.html data.json sync.py
 git commit -m "your message"
 git push
@@ -155,7 +160,9 @@ Each object in the `DESIGNS` array:
   name: 'Kobe Legendary (base)',
   category: 'artist-jared',      // one of the CATEGORIES ids
   subject: 'Kobe Bryant',        // athlete/person, or null (null = in no set)
-  artwork: 'Kobe Legendary',     // source painting (artist cards) — drives per-painting sets; null elsewhere
+  artwork: 'Kobe Legendary',     // source painting (artist cards) — drives per-painting sets; null elsewhere. ⚠ this one's a placeholder (painting unnamed)
+  parallel: 'Legendary',         // treatment line, recurs across paintings/subjects/categories; must be in PARALLELS; null = not yet assigned
+  variant: 'Gold',               // sub-treatment within the parallel (flat string, no sub-variants); variant without parallel ⇒ naming alert
   series: '',                    // release; empty until scraped
   signature: null,               // 'Artist' | 'Designer' | 'Player-Subject' | null
   thumb: null,                   // image URL; null until scraped

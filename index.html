@@ -356,6 +356,28 @@ const SET_TEMPLATE_OVERRIDES = {
 };
 function templateFor(set) { return SET_TEMPLATE_OVERRIDES[set.artwork || set.subject] || SET_TEMPLATE_DEFAULT; }
 
+// ─── Parallels & variants ───────────────────────────────────────────────────────
+// A PARALLEL is a treatment line that recurs across paintings and subjects
+// (design.parallel) — applies to ALL categories, not just artist cards. A VARIANT
+// is a sub-treatment within one parallel (design.variant; flat string, no
+// sub-variants). Each parallel has its own variant list — Legendary has a Gold,
+// other parallels may not. `tier` on a variant is a soft default ("Gold is
+// usually /3"): designs keep their own printLimit; a mismatch produces a naming
+// alert, never a hard error. Like artwork, parallel/variant are user-maintained
+// in the tracker (source of truth). File/app names SHOULD encode them — designs
+// whose names lack the parallel get flagged so the upstream names get fixed.
+// Once the naming convention is final, the sync will parse well-named files and
+// fill these automatically.
+const PARALLELS = [
+  { name:'Legendary', variants:[
+      { name:'Angel',       tier:null },
+      { name:'Gold',        tier:null },
+      { name:'Scoreboard',  tier:null },
+      { name:'Silver Holo', tier:null },
+  ]},
+  // …extend as the vocabulary gets defined (variant tier:N enables mismatch alerts)
+];
+
 // ─── Designs ───────────────────────────────────────────────────────────────────
 // Flat list. Each design: category(1) · subject(athlete/person) · artwork(source
 // painting — artist cards only; groups designs into per-painting sets; user-
@@ -363,15 +385,15 @@ function templateFor(set) { return SET_TEMPLATE_OVERRIDES[set.artwork || set.sub
 // empty until scraped) · signature · thumb · file/print data.
 const DESIGNS = [
   // ── Artist Cards – Jared Emerson · Kobe Bryant ──
-  { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'', signature:null, thumb:null,
+  { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', parallel:'Legendary', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Release Day Series', signature:null, thumb:null,
+  { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', parallel:'Legendary', variant:'Angel', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Kobe Legendary - Angel', printLimit:1, printedAuto:1 },
-  { id:'kobe-legendary-gold', name:'Kobe Legendary – Gold of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-gold', name:'Kobe Legendary – Gold of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', parallel:'Legendary', variant:'Gold', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Gold', printLimit:2, printedAuto:2 },
-  { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', parallel:'Legendary', variant:'Scoreboard', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
-  { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Legendary', parallel:'Legendary', variant:'Silver Holo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'], appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
   { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'], appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
@@ -397,26 +419,26 @@ const DESIGNS = [
     ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'], appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
   { id:'mj-portrait-gold', name:'Jordan Portrait – of1 Gold', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'', signature:null, thumb:null,
+  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel Clear Air', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel Rare Air', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
-  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Clear', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'], appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Leather GOAT', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Plastic Holo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
     appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
-  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Stained Glass', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
-  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', series:'', signature:null, thumb:null,
+  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Space', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Artist Cards – Jared Emerson · Other ──
-  { id:'lebron-legendary', name:'LeBron James – Legendary', category:'artist-jared', subject:'LeBron James', artwork:'LeBron Legendary', series:'', signature:null, thumb:null,
+  { id:'lebron-legendary', name:'LeBron James – Legendary', category:'artist-jared', subject:'LeBron James', artwork:'LeBron Legendary', parallel:'Legendary', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF','2 Front PDFs (Legendary + Stripe variant)'], appDesign:null, printLimit:null, printedAuto:0 },
   { id:'shaq-dunk', name:'Shaq Dunk', category:'artist-jared', subject:'Shaquille O\'Neal', artwork:'Shaq Dunk', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
@@ -515,9 +537,9 @@ const DESIGNS = [
     ai:false, front:false, back:true,  flags:['No .ai source','4 unlabeled PDFs (Mika, Mika 2, Mika Gloss, Mika Back) – old format, needs cleanup'], appDesign:null, printLimit:null, printedAuto:0 },
   { id:'real-motors', name:'Real Motors – Bike Cards', category:'derek-personal', subject:null, series:'Founder\'s Personal Collection', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['3 separate Front PDFs (Bike Card 1/2/3) – multiple designs in one folder?'], appDesign:'RealMotors - Project : ARES', printLimit:3, printedAuto:3 },
-  { id:'soccer-jonah', name:'Soccer – Jonah Legendary', category:'derek-personal', subject:'Jonah', series:'', signature:null, thumb:null,
+  { id:'soccer-jonah', name:'Soccer – Jonah Legendary', category:'derek-personal', subject:'Jonah', parallel:'Legendary', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['PDF not labeled Front/Back (old format?)'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'soccer-william', name:'Soccer – William Legendary', category:'derek-personal', subject:'William', series:'', signature:null, thumb:null,
+  { id:'soccer-william', name:'Soccer – William Legendary', category:'derek-personal', subject:'William', parallel:'Legendary', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['No PDFs exported yet'], appDesign:null, printLimit:null, printedAuto:0 },
   { id:'kid-projects', name:'Kid Projects', category:'derek-personal', subject:null, series:'', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
@@ -718,9 +740,31 @@ function effectiveStatus(d) {
 function statusMeta(s) { return s === 'printing' ? PRINTING : STATUS[s]; }
 
 function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + pl); }
+
+// Derived naming/consistency alerts (computed at render, never stored in flags):
+//  • a variant with no parallel → the file/app name skipped the parallel level
+//  • parallel/variant not in the PARALLELS vocabulary → typo or vocab gap
+//  • design tier ≠ the variant's default tier (when the vocabulary defines one)
+function namingAlerts(d) {
+  const out = [];
+  if (d.variant && !d.parallel) out.push(`Variant “${d.variant}” has no parallel — file/app name is missing the parallel level; set it here, then rename upstream`);
+  if (d.parallel) {
+    const p = PARALLELS.find(p => p.name === d.parallel);
+    if (!p) out.push(`Parallel “${d.parallel}” isn’t in the PARALLELS vocabulary`);
+    else if (d.variant) {
+      const v = p.variants.find(v => v.name === d.variant);
+      if (!v) out.push(`Variant “${d.variant}” isn’t listed under ${d.parallel} in PARALLELS`);
+      else if (v.tier != null && d.printLimit != null && v.tier !== d.printLimit)
+        out.push(`${d.variant} is normally ${tierLabel(v.tier)} — this design is ${tierLabel(d.printLimit)}`);
+    }
+  }
+  return out;
+}
+function issueCount(d) { return d.flags.length + namingAlerts(d).length; }
+
 function matchesSearch(d) {
   if (!search) return true;
-  const hay = [d.name, d.subject || '', d.artwork || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
+  const hay = [d.name, d.subject || '', d.artwork || '', d.parallel || '', d.variant || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
   return hay.includes(search);
 }
 // Designs in the current category scope (ignores status filter) — for the dashboard.
@@ -731,7 +775,7 @@ function scopedDesigns() {
 function visibleDesigns() {
   return DESIGNS.filter(d => {
     if (categoryFilter !== 'all' && d.category !== categoryFilter) return false;
-    if (filter === 'flags') { if (!d.flags.length) return false; }
+    if (filter === 'flags') { if (!issueCount(d)) return false; }
     else if (filter !== 'all') { if (effectiveStatus(d) !== filter) return false; }
     if (!matchesSearch(d)) return false;
     return true;
@@ -794,7 +838,7 @@ function renderStats() {
   pool.forEach(d => {
     const st = effectiveStatus(d);
     c[st] = (c[st] || 0) + 1; c.total++;
-    if (d.flags.length) c.flagged++;
+    if (issueCount(d)) c.flagged++;
   });
   const order = [['pending',STATUS.pending],['inprogress',STATUS.inprogress],['printing',PRINTING],['complete',STATUS.complete],['onhold',STATUS.onhold],['archived',STATUS.archived]];
   document.getElementById('statsBar').innerHTML =
@@ -832,7 +876,7 @@ function filePills(d) {
 function tableHTML() {
   const designs = visibleDesigns();
   if (!designs.length) return `<div class="empty-note">No designs match the current filters.</div>`;
-  const cols = 9;
+  const cols = 10;
   let rows = '';
   CATEGORIES.forEach(cat => {
     const group = designs.filter(d => d.category === cat.id);
@@ -846,7 +890,8 @@ function tableHTML() {
       const es = effectiveStatus(d);
       const sm = statusMeta(es);
       const statusLabel = es === 'printing' ? `Printing ${pv}/${d.printLimit}` : sm.label;
-      const flagDot = d.flags.length ? `<span class="flagdot" onclick="toggleNote('${d.id}')" title="${d.flags.length} flag(s)">⚠${d.flags.length}</span>` : '';
+      const nIssues = issueCount(d);
+      const flagDot = nIssues ? `<span class="flagdot" onclick="toggleNote('${d.id}')" title="${nIssues} flag(s)">⚠${nIssues}</span>` : '';
       rows += `<tr class="d-row status-${es}">
         <td>${thumbCell(d)}</td>
         <td>
@@ -854,6 +899,9 @@ function tableHTML() {
           ${d.appDesign ? `<div class="d-app">App: ${d.appDesign}</div>` : ''}
         </td>
         <td class="d-sub">${d.subject || '—'}${d.artwork ? `<div title="Source painting">🎨 ${d.artwork}</div>` : ''}</td>
+        <td class="d-sub">${d.parallel
+              ? `${d.parallel}${d.variant ? ` › ${d.variant}` : ''}`
+              : (d.variant ? `<span style="color:var(--amber)" title="Variant with no parallel — see flags">⚠ ? › ${d.variant}</span>` : '—')}</td>
         <td class="d-sub">${d.series || '—'}</td>
         <td class="d-sub">${d.signature || '—'}</td>
         <td><span class="tier-chip ${isLimited?'':'none'}">${tierLabel(d.printLimit)}</span></td>
@@ -872,8 +920,9 @@ function tableHTML() {
             </select>
             ${es === 'printing' ? `<span class="d-sub">→ shows as <b style="color:#7cc4ff">Printing ${pv}/${d.printLimit}</b> until fully printed</span>` : ''}
           </div>
-          ${d.flags.length || d.appNameNote || d.appAlso ? `<div class="note-flags">
+          ${issueCount(d) || d.appNameNote || d.appAlso ? `<div class="note-flags">
             ${(d.flags||[]).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
+            ${namingAlerts(d).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
             ${d.appNameNote ? `<div class="flag">⚠ ${d.appNameNote}</div>` : ''}
             ${d.appAlso ? `<div class="d-sub">Also in app: ${d.appAlso.join(' · ')}</div>` : ''}
           </div>` : ''}
@@ -884,7 +933,7 @@ function tableHTML() {
   });
   return `<div class="table-wrap"><table class="dtable">
     <thead><tr>
-      <th>Img</th><th>Design</th><th>Subject</th><th>Series</th><th>Signature</th>
+      <th>Img</th><th>Design</th><th>Subject</th><th>Parallel</th><th>Series</th><th>Signature</th>
       <th>Tier</th><th>Printed</th><th>Status</th><th>Files</th>
     </tr></thead>
     <tbody>${rows}</tbody>
@@ -1056,7 +1105,7 @@ function cardHTML(d) {
     </div>` : ''}
     ${d.appAlso ? `<div style="font-size:10px;color:var(--muted)">Also in app: ${d.appAlso.join(' · ')}</div>` : ''}
     ${d.appNameNote ? `<div class="flag">⚠ ${d.appNameNote}</div>` : ''}
-    ${d.flags.length ? `<div class="flags">${d.flags.map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
+    ${issueCount(d) ? `<div class="flags">${[...d.flags, ...namingAlerts(d)].map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
     <button class="expand-btn" onclick="toggleCard('${d.id}')">+ edit status / notes</button>
     <div class="card-detail">
       <select class="status-select" onchange="updateStatus('${d.id}',this.value)">
