@@ -751,7 +751,9 @@ function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + p
 function namingAlerts(d) {
   const out = [];
   if (d.variant && !d.parallel) {
-    const tmpl = `${d.artwork || d.subject || d.name} - Parallel - ${d.variant}`;
+    // Template follows NAMING.md: Anchor - Parallel - Variant - Tier
+    const tier = d.printLimit == null ? '' : (d.printLimit === 1 ? ' - 1of1' : ` - of${d.printLimit}`);
+    const tmpl = `${d.artwork || d.subject || d.name} - Parallel - ${d.variant}${tier}`;
     out.push(`Variant “${d.variant}” has no parallel — set it here, then rename the file/app to: <span class="rename-tmpl">${tmpl}</span><button class="copy-btn" onclick="copyText('${tmpl.replace(/'/g, "\\'")}', this)">copy</button>`);
   }
   if (d.parallel) {

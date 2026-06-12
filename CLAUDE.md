@@ -15,6 +15,7 @@ A single-page web app for tracking the design/production status of custom tradin
 | `index.html` | The entire app — HTML, CSS, and JS in one file |
 | `data.json` | Runtime status/notes/printed data, keyed by design id. Written by sync and by the app's Save button |
 | `sync.py` | Python script that scans Dropbox and upgrades design statuses |
+| `NAMING.md` | The naming key: `Anchor - Parallel - Variant - Tier - Product` for files/folders/app names; the in-app rename templates and (planned) sync parsing follow it |
 | `.github/workflows/sync-dropbox.yml` | Runs `sync.py` every 6 hours via GitHub Actions |
 | `.claude/launch.json` + `.claude/static-server.js` | Local preview server (Node, no deps) on port 8753 — dev only |
 
