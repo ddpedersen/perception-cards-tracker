@@ -17,7 +17,7 @@
   body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; }
 
   /* ── Modal ── */
-  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(10,10,16,0.92); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
   .modal-overlay.hidden { display: none; }
   .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 30px; max-width: 460px; width: 100%; }
   .modal h2 { font-size: 17px; font-weight: 700; color: #fff; margin-bottom: 8px; }
@@ -52,6 +52,12 @@
   .token-btn { font-size: 11px; color: var(--muted); background: none; border: 1px solid var(--border); border-radius: 5px; padding: 4px 9px; cursor: pointer; }
   .token-btn:hover { border-color: var(--accent); color: var(--text); }
 
+  /* ── View tabs ── */
+  .view-tabs { display: flex; gap: 4px; padding: 8px 28px 0; background: var(--surface); border-bottom: 1px solid var(--border); }
+  .view-tab { padding: 8px 16px; border: none; background: none; color: var(--muted); cursor: pointer; font-size: 13px; font-weight: 600; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .view-tab:hover { color: var(--text); }
+  .view-tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
   /* ── Stats / Controls ── */
   .stats-bar { display: flex; gap: 20px; padding: 12px 28px; background: var(--surface); border-bottom: 1px solid var(--border); flex-wrap: wrap; align-items: center; }
   .stat { display: flex; align-items: center; gap: 6px; font-size: 12px; cursor: pointer; }
@@ -66,10 +72,12 @@
   .ctrl-sep { width: 1px; height: 20px; background: var(--border); margin: 0 2px; }
   .action-btn { padding: 4px 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); cursor: pointer; font-size: 11px; transition: all 0.15s; }
   .action-btn:hover { border-color: var(--accent); color: var(--text); }
+  .cat-select { padding: 5px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 12px; outline: none; cursor: pointer; }
+  .cat-select:focus { border-color: var(--accent); }
   .search-box { margin-left: auto; padding: 5px 11px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 12px; width: 200px; outline: none; }
   .search-box:focus { border-color: var(--accent); }
 
-  /* ── Cards ── */
+  /* ── Cards (grid) ── */
   main { padding: 20px 28px; }
   .category-section { margin-bottom: 28px; }
   .cat-header { display: flex; align-items: center; gap: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border); margin-bottom: 10px; cursor: pointer; user-select: none; }
@@ -87,6 +95,7 @@
   .card.status-pending { border-left: 3px solid var(--muted); }
   .card.status-onhold { border-left: 3px solid var(--blue); }
   .card.status-archived { border-left: 3px solid #444; opacity: 0.6; }
+  .card.status-printing { border-left: 3px solid #7cc4ff; }
 
   .card-row1 { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
   .card-name { font-weight: 600; font-size: 13px; line-height: 1.4; flex: 1; min-width: 120px; }
@@ -98,11 +107,14 @@
   .badge-pending { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
   .badge-onhold { background: var(--blue-bg); color: var(--blue); }
   .badge-archived { background: #1a1a1a; color: #555; }
+  .badge-printing { background: #10233b; color: #7cc4ff; border: 1px solid #25456e; }
   .badge-inapp { background: var(--cyan-bg); color: var(--cyan); border: 1px solid #0e3d47; }
   .badge-notinapp { background: var(--surface2); color: #555; border: 1px solid #333; }
   .badge-orphan { background: var(--orange-bg); color: var(--orange); border: 1px solid #4a2800; }
 
   .app-design-name { font-size: 10px; color: var(--muted); font-style: italic; }
+  .card-meta { font-size: 10px; color: var(--muted); display: flex; gap: 8px; flex-wrap: wrap; }
+  .card-meta b { color: var(--text); font-weight: 600; }
 
   .file-indicators { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
   .fi { font-size: 10px; padding: 2px 7px; border-radius: 4px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); display: flex; align-items: center; gap: 3px; }
@@ -142,6 +154,68 @@
   .orphan-meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
   .orphan-note { font-size: 10px; color: #888; font-style: italic; margin-top: 4px; }
 
+  /* ── Designs table ── */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+  table.dtable { width: 100%; border-collapse: collapse; font-size: 12px; min-width: 880px; }
+  .dtable th { text-align: left; padding: 9px 10px; color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 2; }
+  .dtable td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  .dtable tr.d-row:hover { background: var(--surface); }
+  .dtable tr.cat-row td { background: var(--bg); color: var(--accent); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; padding: 10px 10px 6px; border-bottom: 1px solid var(--border); }
+  .dtable tr.d-row.status-complete td:first-child { box-shadow: inset 3px 0 0 var(--green); }
+  .dtable tr.d-row.status-inprogress td:first-child { box-shadow: inset 3px 0 0 var(--amber); }
+  .dtable tr.d-row.status-pending td:first-child { box-shadow: inset 3px 0 0 var(--muted); }
+  .dtable tr.d-row.status-onhold td:first-child { box-shadow: inset 3px 0 0 var(--blue); }
+  .dtable tr.d-row.status-archived td:first-child { box-shadow: inset 3px 0 0 #444; }
+  .dtable tr.d-row.status-printing td:first-child { box-shadow: inset 3px 0 0 #7cc4ff; }
+  .thumb { width: 38px; height: 52px; border-radius: 4px; object-fit: cover; display: block; }
+  .thumb-ph { background: var(--surface2); border: 1px dashed var(--border); display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 11px; font-weight: 700; }
+  .d-name { font-weight: 600; color: var(--text); cursor: pointer; }
+  .d-name:hover { color: var(--accent); }
+  .d-sub { color: var(--muted); }
+  .d-app { font-size: 10px; color: var(--muted); font-style: italic; }
+  .tier-chip { font-weight: 700; color: var(--purple); }
+  .tier-chip.none { color: var(--muted); font-weight: 400; }
+  .pill-set { display: flex; gap: 3px; }
+  .pill { font-size: 9px; padding: 1px 5px; border-radius: 3px; border: 1px solid var(--border); background: var(--surface2); color: var(--muted); }
+  .pill.on { color: var(--purple); border-color: #4c3d8a; }
+  .pill.off { color: #5a3030; border-color: #3a1a1a; }
+  .flagdot { font-size: 10px; color: var(--amber); cursor: pointer; }
+  .tbl-status { font-size: 11px; padding: 3px 6px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); cursor: pointer; outline: none; }
+  .tbl-printed { width: 38px; font-size: 11px; font-weight: 700; padding: 2px 4px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); text-align: center; outline: none; -moz-appearance: textfield; }
+  .tbl-printed::-webkit-outer-spin-button, .tbl-printed::-webkit-inner-spin-button { -webkit-appearance: none; }
+  tr.note-row td { background: #14141c; padding: 10px 14px; }
+  tr.note-row.hidden { display: none; }
+  .note-flags { display: flex; flex-direction: column; gap: 3px; margin-bottom: 8px; }
+  .note-textarea { width: 100%; font-size: 11px; padding: 6px 8px; border-radius: 4px; background: var(--surface2); border: 1px solid var(--border); color: var(--text); resize: vertical; min-height: 38px; font-family: inherit; outline: none; }
+  .note-textarea:focus { border-color: var(--accent); }
+
+  /* ── Dashboard ── */
+  .dash-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 24px; }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
+  .tile-num { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
+  .tile-num small { font-size: 15px; color: var(--muted); font-weight: 600; }
+  .tile-label { font-size: 11px; color: var(--muted); margin-top: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tile.accent .tile-num { color: var(--accent); }
+  .tile.green .tile-num { color: var(--green); }
+  .tile.amber .tile-num { color: var(--amber); }
+
+  .dash-section { margin-bottom: 26px; }
+  .dash-h { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .dash-h span { color: var(--muted); font-weight: 500; text-transform: none; letter-spacing: 0; font-size: 11px; margin-left: 8px; }
+  table.rollup { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .rollup th { text-align: left; padding: 8px 10px; color: var(--muted); font-weight: 600; font-size: 11px; border-bottom: 1px solid var(--border); }
+  .rollup td { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  .rollup tr:hover td { background: var(--surface); }
+  .rollup .num { text-align: center; }
+  .pips { display: flex; gap: 4px; flex-wrap: wrap; }
+  .pip { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
+  .pip-ok { background: var(--green-bg); color: var(--green); }
+  .pip-miss { background: var(--red-bg); color: #f87171; }
+  .complete-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
+  .complete-tag.yes { background: var(--green-bg); color: var(--green); }
+  .complete-tag.no { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .empty-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; }
+
   /* Loading state */
   .loading-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 500; }
   .loading-overlay.hidden { display: none; }
@@ -149,7 +223,7 @@
 
   #importFile { display: none; }
   .hidden { display: none !important; }
-  @media (max-width: 600px) { header, .stats-bar, .controls, main { padding-left: 14px; padding-right: 14px; } .cards-grid { grid-template-columns: 1fr; } .header-right { width: 100%; justify-content: flex-end; } }
+  @media (max-width: 600px) { header, .stats-bar, .controls, main, .view-tabs { padding-left: 14px; padding-right: 14px; } .cards-grid { grid-template-columns: 1fr; } .header-right { width: 100%; justify-content: flex-end; } .search-box { margin-left: 0; width: 100%; } }
 </style>
 </head>
 <body>
@@ -160,7 +234,7 @@
 </div>
 
 <!-- Token setup modal -->
-<div class="modal-overlay" id="tokenModal">
+<div class="modal-overlay hidden" id="tokenModal">
   <div class="modal">
     <h2>🔑 Connect to GitHub</h2>
     <p>This tracker stores your data in GitHub. You'll need a Personal Access Token — create one once, enter it here, and it's saved to this browser.</p>
@@ -192,9 +266,17 @@
   </div>
 </header>
 
+<div class="view-tabs" id="viewTabs">
+  <button class="view-tab" data-view="dashboard" onclick="setView('dashboard')">📊 Dashboard</button>
+  <button class="view-tab active" data-view="table" onclick="setView('table')">📋 Designs</button>
+  <button class="view-tab" data-view="grid" onclick="setView('grid')">🗂 Grid</button>
+</div>
+
 <div class="stats-bar" id="statsBar"></div>
 
 <div class="controls">
+  <select class="cat-select" id="catSelect" onchange="setCategory(this.value)"></select>
+  <div class="ctrl-sep"></div>
   <span style="color:var(--muted);font-size:12px">Status:</span>
   <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
   <button class="filter-btn" data-filter="pending" onclick="setFilter('pending',this)">Pending</button>
@@ -202,8 +284,6 @@
   <button class="filter-btn" data-filter="complete" onclick="setFilter('complete',this)">Complete</button>
   <button class="filter-btn" data-filter="onhold" onclick="setFilter('onhold',this)">On Hold</button>
   <button class="filter-btn" data-filter="flags" onclick="setFilter('flags',this)">⚠ Issues</button>
-  <button class="filter-btn" data-filter="inapp" onclick="setFilter('inapp',this)">✓ In App</button>
-  <button class="filter-btn" data-filter="notinapp" onclick="setFilter('notinapp',this)">Not in App</button>
   <div class="ctrl-sep"></div>
   <button class="action-btn" onclick="exportData()">⬇ Backup JSON</button>
   <button class="action-btn" onclick="document.getElementById('importFile').click()">⬆ Import JSON</button>
@@ -227,7 +307,7 @@ const GH = {
 };
 
 // ─── App state ────────────────────────────────────────────────────────────────
-let appData = {};  // { [cardId]: { status, notes, printed } }
+let appData = {};  // { [designId]: { status, notes, printed } }
 let isDirty = false;
 
 // ─── STATUS config ────────────────────────────────────────────────────────────
@@ -239,275 +319,203 @@ const STATUS = {
   archived:   { label: 'Archived',    badge: 'badge-archived',   color: '#555'         },
 };
 
-// ─── Card data ────────────────────────────────────────────────────────────────
+// ─── Categories (top-level filter; each design belongs to exactly one) ─────────
 const CATEGORIES = [
-{
-  id:'jared-kobe', name:'Artist Cards – Jared Emerson · Kobe Bryant',
-  cards:[
-    { id:'kobe-legendary',       name:'Kobe Legendary (base)',
-      ai:true,  front:false, back:true,  flags:['Missing Front PDF'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'Kobe Legendary - Angel', printLimit:1, printedAuto:1 },
-    { id:'kobe-legendary-gold',  name:'Kobe Legendary – Gold of2',
-      ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'],
-      appDesign:'Kobe Legendary - Gold', printLimit:2, printedAuto:2 },
-    { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard',
-      ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'],
-      appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
-    { id:'kobe-legendary-silver',name:'Kobe Legendary – Silver Holo',
-      ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'],
-      appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
-    { id:'kobe-chrome',          name:'Portrait – Chrome 1of2',
-      ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'],
-      appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
-    { id:'kobe-chrome-plate',    name:'Portrait – Chrome 1of2 · Graded Plate',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'kobe-plastic-holo',    name:'Portrait – Plastic Holo',
-      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
-      appDesign:'Black Mamba - Satin Holographic', printLimit:10, printedAuto:10,
-      appNameNote:'File: "Plastic Holo" / App: "Satin Holographic" – confirm same design' },
-    { id:'kobe-snake-print',     name:'Portrait – Snake Print',
-      ai:false, front:true,  back:true,  flags:['No .ai source file'],
-      appDesign:'Black Mamba - Holographic Snake', printLimit:5, printedAuto:5,
-      appNameNote:'File: "Snake Print" / App: "Holographic Snake" – confirm same design' },
-    { id:'kobe-snakeskin',       name:'Portrait – Snake Skin 1of1',
-      ai:true,  front:true,  back:true,  flags:['3 .ai files (Front, Back, Plate) – consider consolidating to 1'],
-      appDesign:'Black Mamba on Snake Skin', printLimit:1, printedAuto:0 },
-    { id:'kobe-snakeskin-box',   name:'Portrait – Snake Skin 1of1 · Custom Box',
-      ai:true,  front:false, back:false, flags:['Only unlabeled tiled PDF (box may be single-sided, confirm)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'kobe-court-dreams',    name:'Court Dreams',
-      ai:true,  front:true,  back:true,  flags:['Folder is in Kobe Bryant but design features LeBron (Lebron Laying down - Gigi Shoe)'],
-      appDesign:'Court Dreams - Purple 1/1', printLimit:1, printedAuto:1 },
-  ]
-},
-{
-  id:'jared-mj', name:'Artist Cards – Jared Emerson · Michael Jordan',
-  cards:[
-    { id:'mj-portrait',          name:'Jordan Portrait',
-      ai:true,  front:true,  back:true,  flags:['Folder contains 2 separate designs (Jordan Portrait + Jordan/Kobe Dual) – consider splitting'],
-      appDesign:'MJ Portrait - Copper', printLimit:10, printedAuto:10 },
-    { id:'mj-kobe-dual',         name:'Jordan/Kobe Dual Portrait',
-      ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'],
-      appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
-    { id:'mj-portrait-gold',     name:'Jordan Portrait – of1 Gold',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
-    { id:'mj-flight-angel',      name:'MJ in Flight – Angel 1of1',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
-    { id:'mj-flight-clear-air',  name:'MJ in Flight – Angel Clear Air',
-      ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'mj-flight-rare-air',   name:'MJ in Flight – Angel Rare Air 1of1',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
-    { id:'mj-flight-clear',      name:'MJ in Flight – Clear',
-      ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'],
-      appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
-    { id:'mj-flight-leather',    name:'MJ in Flight – Leather GOAT 1of1',
-      ai:true,  front:false, back:true,  flags:['Missing Front PDF'],
-      appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
-    { id:'mj-flight-holo',       name:'MJ in Flight – Plastic Holo',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
-      appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
-    { id:'mj-flight-stained',    name:'MJ in Flight – Stained Glass',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
-    { id:'mj-flight-space',      name:'MJ in Flight – Space (Concept)',
-      ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'jared-other', name:'Artist Cards – Jared Emerson · Other',
-  cards:[
-    { id:'lebron-legendary',     name:'LeBron James – Legendary',
-      ai:true,  front:true,  back:false, flags:['Missing Back PDF','2 Front PDFs (Legendary + Stripe variant)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'shaq-dunk',            name:'Shaq Dunk',
-      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'hardaway',             name:'Hardaway Pass',
-      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'dual-orlando',         name:'Dual Orlando',
-      ai:true,  front:true,  back:false, flags:['Missing Back PDF'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gng-dual',             name:'GnG Dual (Jordan/Kobe)',
-      ai:true,  front:true,  back:true,  flags:['Folder name says "do we need these" – confirm if still needed'],
-      appDesign:'Dual MJ & Kobe Art Card - Gold 1/1', printLimit:1, printedAuto:1 },
-    { id:'card-backs',           name:'Card Back Designs (template)',
-      ai:true,  front:false, back:false, flags:['Template .ai at Jared Emerson root – not in a design subfolder'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'athletic-art', name:'Artist Cards – Athletic Art SC',
-  cards:[
-    { id:'neoleo', name:'NeoLeo (Leonardo)',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'Neo Leo - Holo of 10', printLimit:10, printedAuto:10 },
-  ]
-},
-{
-  id:'baseball', name:'Baseball',
-  cards:[
-    { id:'kerry-wood',    name:'Kerry Wood – Gum Card',
-      ai:true,  front:true,  back:true,  flags:['Multiple PDFs (Testimony variant) in same folder'],
-      appDesign:'Kerry Wood - Bubble Gum Art', printLimit:3, printedAuto:3 },
-    { id:'roger-clemens', name:'Roger Clemens',
-      ai:true,  front:true,  back:false, flags:['Files at Baseball/ root – not in own subfolder','Missing Back PDF','Filename spells "Clemons" (check: Clemens vs Clemons)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'football', name:'Football',
-  cards:[
-    { id:'cam-skattebo',       name:'Cam Skattebo – Wreck it Rattebo',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'Wreck It Rattebo', printLimit:3, printedAuto:1 },
-    { id:'josh-lego',          name:'Josh Allen – Lego Figure',
-      ai:true,  front:true,  back:true,  flags:['Files at Football/ root – not inside Josh Allen subfolder'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'josh-puffs',         name:'Josh Allen – MVP Puffs Box',
-      ai:true,  front:false, back:true,  flags:['No Front PDF (box may be single-sided – confirm)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'josh-playing-cards', name:'Josh Allen – Playing Cards (set)',
-      ai:true,  front:true,  back:true,  flags:['Many .ai alternates in folder – consider archiving non-final versions'],
-      appDesign:'King & Queen of our Hearts', printLimit:10, printedAuto:1,
-      appAlso:['King of our Hearts (Josh Allen, std, 1 printed)','Queen of our Hearts (Hailee Steinfeld, std, 1 printed)'] },
-    { id:'lee-smith',          name:'Lee Smith',
-      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
-      appDesign:'Lee Smith Holo Leather', printLimit:1, printedAuto:1 },
-  ]
-},
-{
-  id:'micro-wrestling', name:'Micro Wrestling',
-  cards:[
-    { id:'micro-tiger',      name:'MICRO TIGER',
-      ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files – main card + print tiles both present'],
-      appDesign:'Micro Tiger Holo Auto', printLimit:null, printedAuto:3 },
-    { id:'syko',             name:'SYKO',
-      ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files'],
-      appDesign:'SYKO Holo Auto', printLimit:null, printedAuto:3,
-      appAlso:['SYKO Holo - Prototype (std, 2 printed)'] },
-    { id:'pinky-shortcake',  name:'Pinky Shortcake',
-      ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported yet'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'unknown-wrestler', name:'Unknown Wrestler',
-      ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'baby-jesus',       name:'Baby Jesus',
-      ai:false, front:false, back:false, flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'knate',            name:'KNate the Knome',
-      ai:false, front:false, back:false, flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'graded-plates', name:'Graded Plates',
-  cards:[
-    { id:'plate-court-dreams', name:'Court Dreams Purple',
-      ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder','Graded plates may be single-sided – confirm'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'plate-leather-goat', name:'In-Flight Leather GOAT',
-      ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'magical', name:'Magical Cards',
-  cards:[
-    { id:'magical-card', name:'Magical Card',
-      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
-      appDesign:'Magical Emerald', printLimit:null, printedAuto:2 },
-  ]
-},
-{
-  id:'philanthropy', name:'Philanthropic Projects',
-  cards:[
-    { id:'betty-card',    name:'Betty Card',
-      ai:true,  front:true,  back:true,  flags:['Files at Philanthropic Projects/ root – not in own subfolder'],
-      appDesign:'Betty of Ethiopia', printLimit:10, printedAuto:1 },
-    { id:'jake-kellehan', name:'Jake Kellehan (First Order)',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:'Joseph & Kirkley Kellahan - 1/1', printLimit:1, printedAuto:1,
-      appNameNote:'File folder: "Jake Kellehan" / App: "Joseph & Kirkley Kellahan" – verify subject name' },
-  ]
-},
-{
-  id:'derek-personal', name:"Derek's Personal Projects",
-  cards:[
-    { id:'blades-brown',    name:'Blades Brown (pre-sign)',
-      ai:true,  front:false, back:false, flags:['File at Personal root – not in own subfolder','Only unlabeled copy PDF – no Front/Back exports'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'words-from-god',  name:'Words From God',
-      ai:true,  front:true,  back:true,  flags:['3 Front variant PDFs (Big, Lose Count, Stay)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'erik-life-plan',  name:'Erik Jacobson – Life Plan Card',
-      ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'fake-duplicates', name:'Allen & Dart Faux-thentic',
-      ai:true,  front:true,  back:true,  flags:['Front/Back PDF names reference different subjects (Allen ↔ Dart) – verify naming'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'grandpa-deer',    name:"Grandpa's First Deer – 1955",
-      ai:true,  front:false, back:false, flags:['Only unlabeled copy PDF – no Front/Back exports'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-athena',      name:'Gymnastics – Athena',
-      ai:false, front:true,  back:true,  flags:['No .ai source (older format)','Has combined unlabeled PDF + labeled Front/Back PDFs'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-collins',     name:'Gymnastics – Collins',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-julia',       name:'Gymnastics – Julia',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-katarina',    name:'Gymnastics – Katarina',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-mika',        name:'Gymnastics – Mika',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-scarlett',    name:'Gymnastics – Scarlett',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-sophie',      name:'Gymnastics – Sophie',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'gym-zara',        name:'Gymnastics – Zara',
-      ai:true,  front:true,  back:true,  flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'mika-standalone', name:'Mika (standalone)',
-      ai:false, front:false, back:true,  flags:['No .ai source','4 unlabeled PDFs (Mika, Mika 2, Mika Gloss, Mika Back) – old format, needs cleanup'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'real-motors',     name:'Real Motors – Bike Cards',
-      ai:true,  front:true,  back:true,  flags:['3 separate Front PDFs (Bike Card 1/2/3) – multiple designs in one folder?'],
-      appDesign:'RealMotors - Project : ARES', printLimit:3, printedAuto:3 },
-    { id:'soccer-jonah',    name:'Soccer – Jonah Legendary',
-      ai:true,  front:false, back:false, flags:['PDF not labeled Front/Back (old format?)'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'soccer-william',  name:'Soccer – William Legendary',
-      ai:true,  front:false, back:false, flags:['No PDFs exported yet'],
-      appDesign:null, printLimit:null, printedAuto:0 },
-    { id:'kid-projects',    name:'Kid Projects',
-      ai:false, front:false, back:false, flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
-{
-  id:'matt-personal', name:"Matt's Personal Projects",
-  cards:[
-    { id:'matt-empty', name:'(No designs yet)',
-      ai:false, front:false, back:false, flags:[],
-      appDesign:null, printLimit:null, printedAuto:0 },
-  ]
-},
+  { id:'artist-jared',    label:'Artist Cards – Jared Emerson' },
+  { id:'artist-athletic', label:'Artist Cards – Athletic Art' },
+  { id:'baseball',        label:'Baseball Designs' },
+  { id:'football',        label:'Football Designs' },
+  { id:'micro-wrestling', label:'Micro Wrestling' },
+  { id:'graded-plates',   label:'Graded Plates' },
+  { id:'magical',         label:'Magical Cards' },
+  { id:'philanthropy',    label:'Philanthropic Projects' },
+  { id:'derek-personal',  label:"Derek's Personal Projects" },
+  { id:'matt-personal',   label:"Matt's Personal Projects" },
+];
+const CAT_LABEL = Object.fromEntries(CATEGORIES.map(c => [c.id, c.label]));
+
+// ─── Subject completeness template (the "24-card set" target) ──────────────────
+// Default per-subject target. Serials sum to 24 across 8 designs.
+// Per-subject overrides let a subject extend past 24 (or run smaller).
+const SUBJECT_TEMPLATE_DEFAULT = [
+  { limit: 10, count: 1, label: '/10'  },
+  { limit: 5,  count: 1, label: '/5'   },
+  { limit: 3,  count: 1, label: '/3'   },
+  { limit: 2,  count: 1, label: '/2'   },
+  { limit: 1,  count: 4, label: '1/1'  },
+];
+const SUBJECT_TEMPLATE_OVERRIDES = {
+  // 'Michael Jordan': [ { limit:25,count:1,label:'/25' }, ...extend here... ],
+};
+function templateFor(subject) { return SUBJECT_TEMPLATE_OVERRIDES[subject] || SUBJECT_TEMPLATE_DEFAULT; }
+
+// ─── Designs ───────────────────────────────────────────────────────────────────
+// Flat list. Each design: category(1) · subject(athlete/person) · series(release; rolls
+// up from the design's cards — empty until scraped) · signature · thumb · file/print data.
+const DESIGNS = [
+  // ── Artist Cards – Jared Emerson · Kobe Bryant ──
+  { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'kobe-legendary-angel', name:'Kobe Legendary – Angel 1of1', category:'artist-jared', subject:'Kobe Bryant', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'Kobe Legendary - Angel', printLimit:1, printedAuto:1 },
+  { id:'kobe-legendary-gold', name:'Kobe Legendary – Gold of2', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Gold', printLimit:2, printedAuto:2 },
+  { id:'kobe-legendary-score', name:'Kobe Legendary – Scoreboard', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
+  { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'], appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
+  { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'], appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
+  { id:'kobe-chrome-plate', name:'Portrait – Chrome 1of2 · Graded Plate', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'kobe-plastic-holo', name:'Portrait – Plastic Holo', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:'Black Mamba - Satin Holographic', printLimit:10, printedAuto:10,
+    appNameNote:'File: "Plastic Holo" / App: "Satin Holographic" – confirm same design' },
+  { id:'kobe-snake-print', name:'Portrait – Snake Print', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:false, front:true,  back:true,  flags:['No .ai source file'], appDesign:'Black Mamba - Holographic Snake', printLimit:5, printedAuto:5,
+    appNameNote:'File: "Snake Print" / App: "Holographic Snake" – confirm same design' },
+  { id:'kobe-snakeskin', name:'Portrait – Snake Skin 1of1', category:'artist-jared', subject:'Kobe Bryant', series:'Crown Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['3 .ai files (Front, Back, Plate) – consider consolidating to 1'], appDesign:'Black Mamba on Snake Skin', printLimit:1, printedAuto:0 },
+  { id:'kobe-snakeskin-box', name:'Portrait – Snake Skin 1of1 · Custom Box', category:'artist-jared', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Only unlabeled tiled PDF (box may be single-sided, confirm)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'kobe-court-dreams', name:'Court Dreams', category:'artist-jared', subject:'Kobe Bryant', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Folder is in Kobe Bryant but design features LeBron (Lebron Laying down - Gigi Shoe)','Move file to correct location'], appDesign:'Court Dreams - Purple 1/1', printLimit:1, printedAuto:1 },
+
+  // ── Artist Cards – Jared Emerson · Michael Jordan ──
+  { id:'mj-portrait', name:'Jordan Portrait', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Folder contains 2 separate designs (Jordan Portrait + Jordan/Kobe Dual) – consider splitting'], appDesign:'MJ Portrait - Copper', printLimit:10, printedAuto:10 },
+  { id:'mj-kobe-dual', name:'Jordan/Kobe Dual Portrait', category:'artist-jared', subject:'Jordan & Kobe (dual)', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'], appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
+  { id:'mj-portrait-gold', name:'Jordan Portrait – of1 Gold', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
+  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
+  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
+  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'], appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
+  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
+  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
+    appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
+  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
+  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Artist Cards – Jared Emerson · Other ──
+  { id:'lebron-legendary', name:'LeBron James – Legendary', category:'artist-jared', subject:'LeBron James', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['Missing Back PDF','2 Front PDFs (Legendary + Stripe variant)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'shaq-dunk', name:'Shaq Dunk', category:'artist-jared', subject:'Shaquille O\'Neal', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'hardaway', name:'Hardaway Pass', category:'artist-jared', subject:'Penny Hardaway', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'dual-orlando', name:'Dual Orlando', category:'artist-jared', subject:'Shaq & Penny (dual)', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['Missing Back PDF'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gng-dual', name:'GnG Dual (Jordan/Kobe)', category:'artist-jared', subject:'Jordan & Kobe (dual)', series:'Release Day Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Folder name says "do we need these" – confirm if still needed'], appDesign:'Dual MJ & Kobe Art Card - Gold 1/1', printLimit:1, printedAuto:1 },
+  { id:'card-backs', name:'Card Back Designs (template)', category:'artist-jared', subject:null, series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Template .ai at Jared Emerson root – not in a design subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Artist Cards – Athletic Art SC ──
+  { id:'neoleo', name:'NeoLeo (Leonardo)', category:'artist-athletic', subject:'Leonardo (NeoLeo)', series:'Jon Caneda Collection 1', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'Neo Leo - Holo of 10', printLimit:10, printedAuto:10 },
+
+  // ── Baseball ──
+  { id:'kerry-wood', name:'Kerry Wood – Gum Card', category:'baseball', subject:'Kerry Wood', series:'Founder\'s Personal Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Multiple PDFs (Testimony variant) in same folder'], appDesign:'Kerry Wood - Bubble Gum Art', printLimit:3, printedAuto:3 },
+  { id:'roger-clemens', name:'Roger Clemens', category:'baseball', subject:'Roger Clemens', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['Files at Baseball/ root – not in own subfolder','Missing Back PDF','Filename spells "Clemons" (check: Clemens vs Clemons)'], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Football ──
+  { id:'cam-skattebo', name:'Cam Skattebo – Wreck it Rattebo', category:'football', subject:'Cam Skattebo', series:'Fantasy Football', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'Wreck It Rattebo', printLimit:3, printedAuto:1 },
+  { id:'josh-lego', name:'Josh Allen – Lego Figure', category:'football', subject:'Josh Allen', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Files at Football/ root – not inside Josh Allen subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'josh-puffs', name:'Josh Allen – MVP Puffs Box', category:'football', subject:'Josh Allen', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:true,  flags:['No Front PDF (box may be single-sided – confirm)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'josh-playing-cards', name:'Josh Allen – Playing Cards (set)', category:'football', subject:'Josh Allen', series:'Founders Series', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Many .ai alternates in folder – consider archiving non-final versions'], appDesign:'King & Queen of our Hearts', printLimit:10, printedAuto:1,
+    appAlso:['King of our Hearts (Josh Allen, std, 1 printed)','Queen of our Hearts (Hailee Steinfeld, std, 1 printed)'] },
+  { id:'lee-smith', name:'Lee Smith', category:'football', subject:'Lee Smith', series:'Perception Customs', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:'Lee Smith Holo Leather', printLimit:1, printedAuto:1 },
+
+  // ── Micro Wrestling ──
+  { id:'micro-tiger', name:'MICRO TIGER', category:'micro-wrestling', subject:'Micro Tiger', series:'Micro - First On Print', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files – main card + print tiles both present'], appDesign:'Micro Tiger Holo Auto', printLimit:null, printedAuto:3 },
+  { id:'syko', name:'SYKO', category:'micro-wrestling', subject:'SYKO', series:'Micro - First On Print', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Multiple tiled variant files'], appDesign:'SYKO Holo Auto', printLimit:null, printedAuto:3,
+    appAlso:['SYKO Holo - Prototype (std, 2 printed)'] },
+  { id:'pinky-shortcake', name:'Pinky Shortcake', category:'micro-wrestling', subject:'Pinky Shortcake', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported yet'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'unknown-wrestler', name:'Unknown Wrestler', category:'micro-wrestling', subject:'Unknown Wrestler', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Separate Front.ai & Back.ai – no PDFs exported'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'baby-jesus', name:'Baby Jesus', category:'micro-wrestling', subject:'Baby Jesus', series:'', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'knate', name:'KNate the Knome', category:'micro-wrestling', subject:'KNate the Knome', series:'', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Graded Plates ──
+  { id:'plate-court-dreams', name:'Court Dreams Purple', category:'graded-plates', subject:'Kobe Bryant', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder','Graded plates may be single-sided – confirm'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'plate-leather-goat', name:'In-Flight Leather GOAT', category:'graded-plates', subject:'Michael Jordan', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:false, flags:['File at Graded Plates/ root – no subfolder'], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Magical Cards ──
+  { id:'magical-card', name:'Magical Card', category:'magical', subject:null, series:'Founder\'s Personal Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:'Magical Emerald', printLimit:null, printedAuto:2 },
+
+  // ── Philanthropic Projects ──
+  { id:'betty-card', name:'Betty Card', category:'philanthropy', subject:'Betty', series:'Founder\'s Personal Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Files at Philanthropic Projects/ root – not in own subfolder'], appDesign:'Betty of Ethiopia', printLimit:10, printedAuto:1 },
+  { id:'jake-kellehan', name:'Jake Kellehan (First Order)', category:'philanthropy', subject:'Jake Kellehan', series:'Founder\'s Personal Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:'Joseph & Kirkley Kellahan - 1/1', printLimit:1, printedAuto:1,
+    appNameNote:'File folder: "Jake Kellehan" / App: "Joseph & Kirkley Kellahan" – verify subject name' },
+
+  // ── Derek's Personal Projects ──
+  { id:'blades-brown', name:'Blades Brown (pre-sign)', category:'derek-personal', subject:'Blades Brown', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['File at Personal root – not in own subfolder','Only unlabeled copy PDF – no Front/Back exports'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'words-from-god', name:'Words From God', category:'derek-personal', subject:null, series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['3 Front variant PDFs (Big, Lose Count, Stay)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'erik-life-plan', name:'Erik Jacobson – Life Plan Card', category:'derek-personal', subject:'Erik Jacobson', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'fake-duplicates', name:'Allen & Dart Faux-thentic', category:'derek-personal', subject:null, series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['Front/Back PDF names reference different subjects (Allen ↔ Dart) – verify naming'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'grandpa-deer', name:"Grandpa's First Deer – 1955", category:'derek-personal', subject:null, series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['Only unlabeled copy PDF – no Front/Back exports'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-athena', name:'Gymnastics – Athena', category:'derek-personal', subject:'Athena', series:'', signature:null, thumb:null,
+    ai:false, front:true,  back:true,  flags:['No .ai source (older format)','Has combined unlabeled PDF + labeled Front/Back PDFs'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-collins', name:'Gymnastics – Collins', category:'derek-personal', subject:'Collins', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-julia', name:'Gymnastics – Julia', category:'derek-personal', subject:'Julia', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-katarina', name:'Gymnastics – Katarina', category:'derek-personal', subject:'Katarina', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-mika', name:'Gymnastics – Mika', category:'derek-personal', subject:'Mika', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-scarlett', name:'Gymnastics – Scarlett', category:'derek-personal', subject:'Scarlett', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-sophie', name:'Gymnastics – Sophie', category:'derek-personal', subject:'Sophie', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'gym-zara', name:'Gymnastics – Zara', category:'derek-personal', subject:'Zara', series:'', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'mika-standalone', name:'Mika (standalone)', category:'derek-personal', subject:'Mika', series:'', signature:null, thumb:null,
+    ai:false, front:false, back:true,  flags:['No .ai source','4 unlabeled PDFs (Mika, Mika 2, Mika Gloss, Mika Back) – old format, needs cleanup'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'real-motors', name:'Real Motors – Bike Cards', category:'derek-personal', subject:null, series:'Founder\'s Personal Collection', signature:null, thumb:null,
+    ai:true,  front:true,  back:true,  flags:['3 separate Front PDFs (Bike Card 1/2/3) – multiple designs in one folder?'], appDesign:'RealMotors - Project : ARES', printLimit:3, printedAuto:3 },
+  { id:'soccer-jonah', name:'Soccer – Jonah Legendary', category:'derek-personal', subject:'Jonah', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['PDF not labeled Front/Back (old format?)'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'soccer-william', name:'Soccer – William Legendary', category:'derek-personal', subject:'William', series:'', signature:null, thumb:null,
+    ai:true,  front:false, back:false, flags:['No PDFs exported yet'], appDesign:null, printLimit:null, printedAuto:0 },
+  { id:'kid-projects', name:'Kid Projects', category:'derek-personal', subject:null, series:'', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
+
+  // ── Matt's Personal Projects ──
+  { id:'matt-empty', name:'(No designs yet)', category:'matt-personal', subject:null, series:'', signature:null, thumb:null,
+    ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
 ];
 
 const ORPHAN_DESIGNS = [
@@ -676,24 +684,102 @@ window.addEventListener('beforeunload', e => { if (isDirty) { e.preventDefault()
 document.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key === 's') { e.preventDefault(); saveData(); } });
 
 // ─── State ────────────────────────────────────────────────────────────────────
-let filter = 'all', search = '';
+let view = 'table';          // 'dashboard' | 'table' | 'grid'
+let filter = 'all';          // status filter (table/grid)
+let categoryFilter = 'all';  // category filter (all views)
+let search = '';
 
-// ─── Render ───────────────────────────────────────────────────────────────────
-function renderAll() { renderStats(); renderMain(); }
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function printedValue(d) {
+  const cd = cardData(d.id);
+  // data.json entries usually omit `printed` (undefined), so use loose `!= null`
+  // to catch both null and undefined and fall back to the app-derived count.
+  return cd.printed != null ? cd.printed : d.printedAuto;
+}
+
+// ─── Derived print-aware status ───────────────────────────────────────────────
+// data.json `status` is file-based (sync-owned). A LIMITED design that is file-
+// complete but not yet fully printed is shown as 'printing' (counts as not done).
+const PRINTING = { label: 'Printing', badge: 'badge-printing', color: '#7cc4ff' };
+function effectiveStatus(d) {
+  const cd = cardData(d.id);
+  if (cd.status === 'complete' && d.printLimit != null && printedValue(d) < d.printLimit) return 'printing';
+  return cd.status;
+}
+function statusMeta(s) { return s === 'printing' ? PRINTING : STATUS[s]; }
+
+function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + pl); }
+function matchesSearch(d) {
+  if (!search) return true;
+  const hay = [d.name, d.subject || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
+  return hay.includes(search);
+}
+// Designs in the current category scope (ignores status filter) — for the dashboard.
+function scopedDesigns() {
+  return DESIGNS.filter(d => categoryFilter === 'all' || d.category === categoryFilter);
+}
+// Designs visible in table/grid (category + status filter + search).
+function visibleDesigns() {
+  return DESIGNS.filter(d => {
+    if (categoryFilter !== 'all' && d.category !== categoryFilter) return false;
+    if (filter === 'flags') { if (!d.flags.length) return false; }
+    else if (filter !== 'all') { if (effectiveStatus(d) !== filter) return false; }
+    if (!matchesSearch(d)) return false;
+    return true;
+  });
+}
+
+// ─── Subject completeness (the "24-card set" report) ──────────────────────────
+function subjectReport(subject, pool) {
+  const designs = pool.filter(d => d.subject === subject);
+  const tmpl = templateFor(subject);
+  const byLimit = {};         // limit -> [designs]
+  const untiered = [];        // printLimit === null
+  designs.forEach(d => {
+    if (d.printLimit == null) untiered.push(d);
+    else (byLimit[d.printLimit] = byLimit[d.printLimit] || []).push(d);
+  });
+  const tmplLimits = new Set(tmpl.map(t => t.limit));
+  const slots = tmpl.map(t => {
+    const have = byLimit[t.limit] || [];
+    return { ...t, have: have.length, filled: Math.min(have.length, t.count), over: Math.max(0, have.length - t.count) };
+  });
+  const extras = [];
+  Object.keys(byLimit).forEach(l => { if (!tmplLimits.has(Number(l))) extras.push(...byLimit[l]); });
+  slots.forEach(s => { if (s.over > 0) extras.push(...(byLimit[s.limit] || []).slice(s.count)); });
+  const targetDesigns = tmpl.reduce((a, t) => a + t.count, 0);
+  const filledDesigns = slots.reduce((a, s) => a + s.filled, 0);
+  const complete = slots.every(s => s.filled >= s.count);
+  const designComplete = designs.filter(d => effectiveStatus(d) === 'complete').length;
+  return { subject, designs, slots, extras, untiered, targetDesigns, filledDesigns, complete, designComplete, total: designs.length };
+}
+
+// ─── Render dispatch ──────────────────────────────────────────────────────────
+function renderAll() { renderStats(); renderView(); }
+
+function renderView() {
+  document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
+  const main = document.getElementById('main');
+  if (view === 'dashboard') main.innerHTML = dashboardHTML();
+  else if (view === 'table') main.innerHTML = tableHTML();
+  else main.innerHTML = gridHTML();
+}
+function setView(v) { view = v; renderView(); }
 
 function renderStats() {
-  const c = { pending:0, inprogress:0, complete:0, onhold:0, archived:0, flagged:0, inapp:0, total:0 };
-  CATEGORIES.forEach(cat => cat.cards.forEach(card => {
-    const d = cardData(card.id);
-    c[d.status]++; c.total++;
-    if (card.flags.length) c.flagged++;
-    if (card.appDesign) c.inapp++;
-  }));
+  const pool = scopedDesigns();
+  const c = { pending:0, inprogress:0, printing:0, complete:0, onhold:0, archived:0, flagged:0, total:0 };
+  pool.forEach(d => {
+    const st = effectiveStatus(d);
+    c[st] = (c[st] || 0) + 1; c.total++;
+    if (d.flags.length) c.flagged++;
+  });
+  const order = [['pending',STATUS.pending],['inprogress',STATUS.inprogress],['printing',PRINTING],['complete',STATUS.complete],['onhold',STATUS.onhold],['archived',STATUS.archived]];
   document.getElementById('statsBar').innerHTML =
-    Object.entries(STATUS).map(([k,v]) => `
+    order.map(([k,v]) => `
       <div class="stat" onclick="setFilter('${k}',null)">
         <div class="stat-dot" style="background:${v.color}"></div>
-        <span class="stat-num" style="color:${v.color}">${c[k]}</span>
+        <span class="stat-num" style="color:${v.color}">${c[k]||0}</span>
         <span style="color:var(--muted)">${v.label}</span>
       </div>`).join('') +
     `<div class="stat" onclick="setFilter('flags',null)" style="margin-left:8px">
@@ -701,100 +787,259 @@ function renderStats() {
       <span class="stat-num" style="color:var(--amber)">${c.flagged}</span>
       <span style="color:var(--muted)">Issues</span>
     </div>
-    <div class="stat" onclick="setFilter('inapp',null)">
-      <div class="stat-dot" style="background:var(--cyan)"></div>
-      <span class="stat-num" style="color:var(--cyan)">${c.inapp}</span>
-      <span style="color:var(--muted)">In App</span>
-    </div>
     <div class="stat" style="margin-left:auto;cursor:default">
       <span class="stat-num">${c.total}</span>
-      <span style="color:var(--muted)">Total</span>
+      <span style="color:var(--muted)">Designs</span>
     </div>`;
 }
 
-function renderMain() {
-  const main = document.getElementById('main');
-  main.innerHTML = '';
+// ─── Designs table view ───────────────────────────────────────────────────────
+function thumbCell(d) {
+  if (d.thumb) return `<img class="thumb" src="${d.thumb}" alt="">`;
+  const base = d.subject || d.name;
+  const initials = base.split(/\s+/).slice(0,2).map(w => w[0]).join('').toUpperCase();
+  return `<div class="thumb thumb-ph">${initials}</div>`;
+}
+function filePills(d) {
+  return `<div class="pill-set">
+    <span class="pill ${d.ai?'on':'off'}">AI</span>
+    <span class="pill ${d.front?'on':'off'}">F</span>
+    <span class="pill ${d.back?'on':'off'}">B</span>
+  </div>`;
+}
+function tableHTML() {
+  const designs = visibleDesigns();
+  if (!designs.length) return `<div class="empty-note">No designs match the current filters.</div>`;
+  const cols = 9;
+  let rows = '';
   CATEGORIES.forEach(cat => {
-    const visible = cat.cards.filter(card => {
-      const d = cardData(card.id);
-      if (filter === 'flags') return card.flags.length > 0;
-      if (filter === 'inapp') return !!card.appDesign;
-      if (filter === 'notinapp') return !card.appDesign;
-      if (filter !== 'all' && d.status !== filter) return false;
-      if (search && !card.name.toLowerCase().includes(search) && !cat.name.toLowerCase().includes(search)) return false;
-      return true;
+    const group = designs.filter(d => d.category === cat.id);
+    if (!group.length) return;
+    rows += `<tr class="cat-row"><td colspan="${cols}">${cat.label} · ${group.length}</td></tr>`;
+    group.forEach(d => {
+      const cd = cardData(d.id);
+      const pv = printedValue(d);
+      const isLimited = d.printLimit != null;
+      const showPrint = isLimited || d.printedAuto > 0;
+      const es = effectiveStatus(d);
+      const sm = statusMeta(es);
+      const statusLabel = es === 'printing' ? `Printing ${pv}/${d.printLimit}` : sm.label;
+      const flagDot = d.flags.length ? `<span class="flagdot" onclick="toggleNote('${d.id}')" title="${d.flags.length} flag(s)">⚠${d.flags.length}</span>` : '';
+      rows += `<tr class="d-row status-${es}">
+        <td>${thumbCell(d)}</td>
+        <td>
+          <div class="d-name" onclick="toggleNote('${d.id}')">${d.name} ${flagDot}</div>
+          ${d.appDesign ? `<div class="d-app">App: ${d.appDesign}</div>` : ''}
+        </td>
+        <td class="d-sub">${d.subject || '—'}</td>
+        <td class="d-sub">${d.series || '—'}</td>
+        <td class="d-sub">${d.signature || '—'}</td>
+        <td><span class="tier-chip ${isLimited?'':'none'}">${tierLabel(d.printLimit)}</span></td>
+        <td>${showPrint
+              ? `<input type="number" class="tbl-printed" value="${pv}" min="0" max="${d.printLimit||9999}" onchange="updatePrinted('${d.id}',this.value)"> <span class="d-sub">/ ${isLimited?d.printLimit:'—'}</span>`
+              : '<span class="d-sub">—</span>'}</td>
+        <td><span class="badge ${sm.badge}" onclick="toggleNote('${d.id}')" style="cursor:pointer" title="Click to edit file status / notes">${statusLabel}</span></td>
+        <td>${filePills(d)}</td>
+      </tr>
+      <tr class="note-row hidden" id="note-${d.id}">
+        <td colspan="${cols}">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+            <span class="d-sub">File status:</span>
+            <select class="tbl-status" onchange="updateStatus('${d.id}',this.value)">
+              ${Object.entries(STATUS).map(([k,v]) => `<option value="${k}" ${k===cd.status?'selected':''}>${v.label}</option>`).join('')}
+            </select>
+            ${es === 'printing' ? `<span class="d-sub">→ shows as <b style="color:#7cc4ff">Printing ${pv}/${d.printLimit}</b> until fully printed</span>` : ''}
+          </div>
+          ${d.flags.length || d.appNameNote || d.appAlso ? `<div class="note-flags">
+            ${(d.flags||[]).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
+            ${d.appNameNote ? `<div class="flag">⚠ ${d.appNameNote}</div>` : ''}
+            ${d.appAlso ? `<div class="d-sub">Also in app: ${d.appAlso.join(' · ')}</div>` : ''}
+          </div>` : ''}
+          <textarea class="note-textarea" placeholder="Notes, next steps, blockers…" onblur="updateNotes('${d.id}',this.value)">${cd.notes||''}</textarea>
+        </td>
+      </tr>`;
     });
-    if (!visible.length) return;
-    const sec = document.createElement('div');
-    sec.className = 'category-section';
-    sec.innerHTML = `
-      <div class="cat-header" onclick="this.parentElement.classList.toggle('collapsed')">
-        <h2>${cat.name}</h2><span class="cat-count">${visible.length}</span><span class="cat-chevron">▼</span>
-      </div>
-      <div class="cards-grid">${visible.map(c => cardHTML(c)).join('')}</div>`;
-    main.appendChild(sec);
   });
+  return `<div class="table-wrap"><table class="dtable">
+    <thead><tr>
+      <th>Img</th><th>Design</th><th>Subject</th><th>Series</th><th>Signature</th>
+      <th>Tier</th><th>Printed</th><th>Status</th><th>Files</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`;
+}
+function toggleNote(id) {
+  const el = document.getElementById('note-' + id);
+  if (el) el.classList.toggle('hidden');
+}
 
-  // Orphan section
-  if (!['flags','complete','inprogress','onhold','archived','pending','inapp'].includes(filter)) {
-    const sec = document.createElement('div');
-    sec.className = 'category-section';
-    sec.innerHTML = `
+// ─── Dashboard view ───────────────────────────────────────────────────────────
+function dashboardHTML() {
+  const pool = scopedDesigns();
+  const subjects = [...new Set(pool.filter(d => d.subject).map(d => d.subject))];
+  const reports = subjects.map(s => subjectReport(s, pool))
+    .sort((a, b) => (b.filledDesigns - a.filledDesigns) || (b.total - a.total) || a.subject.localeCompare(b.subject));
+
+  const statusCount = { complete:0, inprogress:0, printing:0, pending:0, onhold:0, archived:0 };
+  pool.forEach(d => { const st = effectiveStatus(d); statusCount[st] = (statusCount[st]||0) + 1; });
+  const subjectsComplete = reports.filter(r => r.complete).length;
+
+  // Tiles
+  const tiles = `<div class="dash-tiles">
+    <div class="tile accent"><div class="tile-num">${pool.length}</div><div class="tile-label">Designs</div></div>
+    <div class="tile"><div class="tile-num">${subjects.length}</div><div class="tile-label">Subjects / Players</div></div>
+    <div class="tile green"><div class="tile-num">${subjectsComplete}<small> / ${subjects.length}</small></div><div class="tile-label">Sets Complete (24)</div></div>
+    <div class="tile green"><div class="tile-num">${statusCount.complete}</div><div class="tile-label">Designs Complete</div></div>
+    <div class="tile"><div class="tile-num" style="color:#7cc4ff">${statusCount.printing}</div><div class="tile-label">Printing</div></div>
+    <div class="tile amber"><div class="tile-num">${statusCount.inprogress}</div><div class="tile-label">In Progress</div></div>
+    <div class="tile"><div class="tile-num">${statusCount.pending}</div><div class="tile-label">Pending</div></div>
+  </div>`;
+
+  // By subject (completeness scorecard)
+  const subjRows = reports.map(r => {
+    const pips = r.slots.map(s => {
+      const ok = s.filled >= s.count;
+      const extra = s.over > 0 ? ` +${s.over}` : '';
+      return `<span class="pip ${ok?'pip-ok':'pip-miss'}" title="${s.label}: have ${s.have}, need ${s.count}">${s.label} ${s.filled}/${s.count}${extra}</span>`;
+    }).join('');
+    const cats = [...new Set(r.designs.map(d => CAT_LABEL[d.category]))].join(', ');
+    return `<tr>
+      <td><b>${r.subject}</b><div class="d-sub">${cats}</div></td>
+      <td class="num">${r.total}</td>
+      <td><div class="pips">${pips}</div>${r.extras.length?`<div class="d-sub" style="margin-top:4px">Extras: ${r.extras.map(d=>tierLabel(d.printLimit)).join(', ')}</div>`:''}${r.untiered.length?`<div class="d-sub">Untiered: ${r.untiered.length}</div>`:''}</td>
+      <td class="num">${r.designComplete}/${r.total}</td>
+      <td><span class="complete-tag ${r.complete?'yes':'no'}">${r.complete?'✓ Complete':r.filledDesigns+'/'+r.targetDesigns}</span></td>
+    </tr>`;
+  }).join('');
+  const subjSection = `<div class="dash-section">
+    <div class="dash-h">By Subject <span>completeness vs the 24-card template (/10 · /5 · /3 · /2 · 1/1×4)</span></div>
+    <table class="rollup">
+      <thead><tr><th>Subject</th><th class="num">Designs</th><th>Tier coverage</th><th class="num">Done</th><th>Set</th></tr></thead>
+      <tbody>${subjRows || `<tr><td colspan="5" class="d-sub">No subjects in scope.</td></tr>`}</tbody>
+    </table>
+  </div>`;
+
+  // By series
+  const seriesMap = {};
+  pool.forEach(d => { if (d.series) (seriesMap[d.series] = seriesMap[d.series] || []).push(d); });
+  const seriesKeys = Object.keys(seriesMap);
+  let seriesSection;
+  if (!seriesKeys.length) {
+    seriesSection = `<div class="dash-section">
+      <div class="dash-h">By Series <span>release groupings</span></div>
+      <div class="empty-note">No series data yet. Series lives on the cards in your app and will populate here once scraped — then this shows players-per-series and designs-per-series.</div>
+    </div>`;
+  } else {
+    const sRows = seriesKeys.sort().map(k => {
+      const ds = seriesMap[k];
+      const players = new Set(ds.filter(d => d.subject).map(d => d.subject)).size;
+      const done = ds.filter(d => effectiveStatus(d) === 'complete').length;
+      return `<tr><td><b>${k}</b></td><td class="num">${players}</td><td class="num">${ds.length}</td><td class="num">${done}</td></tr>`;
+    }).join('');
+    seriesSection = `<div class="dash-section">
+      <div class="dash-h">By Series <span>release groupings</span></div>
+      <table class="rollup">
+        <thead><tr><th>Series</th><th class="num">Players</th><th class="num">Designs</th><th class="num">Complete</th></tr></thead>
+        <tbody>${sRows}</tbody>
+      </table>
+    </div>`;
+  }
+
+  // By category
+  const catRows = CATEGORIES.map(cat => {
+    const ds = pool.filter(d => d.category === cat.id);
+    if (!ds.length) return '';
+    const cc = { complete:0, printing:0, inprogress:0, pending:0 };
+    ds.forEach(d => { const st = effectiveStatus(d); if (cc[st] !== undefined) cc[st]++; });
+    const players = new Set(ds.filter(d => d.subject).map(d => d.subject)).size;
+    return `<tr><td><b>${cat.label}</b></td><td class="num">${ds.length}</td><td class="num">${players}</td>
+      <td class="num" style="color:var(--green)">${cc.complete}</td><td class="num" style="color:#7cc4ff">${cc.printing}</td><td class="num" style="color:var(--amber)">${cc.inprogress}</td><td class="num" style="color:var(--muted)">${cc.pending}</td></tr>`;
+  }).join('');
+  const catSection = `<div class="dash-section">
+    <div class="dash-h">By Category</div>
+    <table class="rollup">
+      <thead><tr><th>Category</th><th class="num">Designs</th><th class="num">Subjects</th><th class="num">Complete</th><th class="num">Printing</th><th class="num">In Prog</th><th class="num">Pending</th></tr></thead>
+      <tbody>${catRows}</tbody>
+    </table>
+  </div>`;
+
+  return tiles + subjSection + seriesSection + catSection;
+}
+
+// ─── Grid view (original card layout) ─────────────────────────────────────────
+function gridHTML() {
+  const designs = visibleDesigns();
+  let html = '';
+  CATEGORIES.forEach(cat => {
+    const group = designs.filter(d => d.category === cat.id);
+    if (!group.length) return;
+    html += `<div class="category-section">
+      <div class="cat-header" onclick="this.parentElement.classList.toggle('collapsed')">
+        <h2>${cat.label}</h2><span class="cat-count">${group.length}</span><span class="cat-chevron">▼</span>
+      </div>
+      <div class="cards-grid">${group.map(cardHTML).join('')}</div>
+    </div>`;
+  });
+  // Orphan section (only on the unfiltered grid)
+  if (filter === 'all' && categoryFilter === 'all' && !search) {
+    html += `<div class="category-section">
       <div class="cat-header" onclick="this.parentElement.classList.toggle('collapsed')">
         <h2>App Designs – No File Match</h2><span class="cat-count">${ORPHAN_DESIGNS.length}</span><span class="cat-chevron">▼</span>
       </div>
-      <div class="orphan-grid">${ORPHAN_DESIGNS.map(orphanHTML).join('')}</div>`;
-    main.appendChild(sec);
+      <div class="orphan-grid">${ORPHAN_DESIGNS.map(orphanHTML).join('')}</div>
+    </div>`;
   }
+  return html || `<div class="empty-note">No designs match the current filters.</div>`;
 }
 
-function printedValue(card) {
-  const d = cardData(card.id);
-  return d.printed !== null ? d.printed : card.printedAuto;
-}
-
-function cardHTML(card) {
-  const d = cardData(card.id);
-  const s = STATUS[d.status];
-  const pv = printedValue(card);
-  const isLimited = card.printLimit !== null;
-  const setComplete = isLimited && pv >= card.printLimit && d.status !== 'complete';
-  const autoHint = d.printed !== null && d.printed !== card.printedAuto && card.printedAuto > 0
-    ? `<span class="print-auto">app: ${card.printedAuto}</span>` : '';
-  return `<div class="card status-${d.status}" id="c-${card.id}">
+function cardHTML(d) {
+  const cd = cardData(d.id);
+  const pv = printedValue(d);
+  const es = effectiveStatus(d);
+  const s = statusMeta(es);
+  const statusLabel = es === 'printing' ? `Printing ${pv}/${d.printLimit}` : s.label;
+  const isLimited = d.printLimit !== null;
+  const setComplete = isLimited && pv >= d.printLimit && cd.status !== 'complete';
+  const autoHint = cd.printed != null && cd.printed !== d.printedAuto && d.printedAuto > 0
+    ? `<span class="print-auto">app: ${d.printedAuto}</span>` : '';
+  return `<div class="card status-${es}" id="c-${d.id}">
     <div class="card-row1">
-      <div class="card-name">${card.name}</div>
+      <div class="card-name">${d.name}</div>
       <div class="card-badges">
-        ${card.appDesign ? `<span class="badge badge-inapp">✓ In App</span>` : `<span class="badge badge-notinapp">Not in App</span>`}
-        <span class="badge ${s.badge}">${s.label}</span>
+        ${d.appDesign ? `<span class="badge badge-inapp">✓ In App</span>` : `<span class="badge badge-notinapp">Not in App</span>`}
+        <span class="badge ${s.badge}">${statusLabel}</span>
       </div>
     </div>
-    ${card.appDesign ? `<div class="app-design-name">App: ${card.appDesign}${card.appNameNote?` <span style="color:var(--red)">⚠</span>`:''}` + `</div>` : ''}
-    <div class="file-indicators">
-      <span class="fi ${card.ai?'has':'missing'}">${card.ai?'✓':'✗'} .ai</span>
-      <span class="fi ${card.front?'has-front':'missing'}">${card.front?'✓':'✗'} Front PDF</span>
-      <span class="fi ${card.back?'has-back':'missing'}">${card.back?'✓':'✗'} Back PDF</span>
+    <div class="card-meta">
+      ${d.subject ? `<span>Subject: <b>${d.subject}</b></span>` : ''}
+      <span>Series: <b>${d.series || '—'}</b></span>
+      <span>Sig: <b>${d.signature || '—'}</b></span>
     </div>
-    ${(card.appDesign||card.printedAuto>0) ? `
+    ${d.appDesign ? `<div class="app-design-name">App: ${d.appDesign}${d.appNameNote?` <span style="color:var(--red)">⚠</span>`:''}</div>` : ''}
+    <div class="file-indicators">
+      <span class="fi ${d.ai?'has':'missing'}">${d.ai?'✓':'✗'} .ai</span>
+      <span class="fi ${d.front?'has-front':'missing'}">${d.front?'✓':'✗'} Front PDF</span>
+      <span class="fi ${d.back?'has-back':'missing'}">${d.back?'✓':'✗'} Back PDF</span>
+    </div>
+    ${(d.appDesign||d.printedAuto>0) ? `
     <div class="print-tracker">
       <span class="print-label">Printed:</span>
-      <input type="number" class="print-input" value="${pv}" min="0" max="${card.printLimit||9999}"
-        onchange="updatePrinted('${card.id}',this.value,${card.printLimit||'null'})">
+      <input type="number" class="print-input" value="${pv}" min="0" max="${d.printLimit||9999}"
+        onchange="updatePrinted('${d.id}',this.value)">
       <span class="print-sep">/</span>
-      <span class="print-limit">${isLimited ? card.printLimit : '—'}</span>
+      <span class="print-limit">${isLimited ? d.printLimit : '—'}</span>
       ${autoHint}
-      ${setComplete ? `<button class="print-complete-btn" onclick="markComplete('${card.id}')">✓ Mark Complete</button>` : ''}
+      ${setComplete ? `<button class="print-complete-btn" onclick="markComplete('${d.id}')">✓ Mark Complete</button>` : ''}
     </div>` : ''}
-    ${card.appAlso ? `<div style="font-size:10px;color:var(--muted)">Also in app: ${card.appAlso.join(' · ')}</div>` : ''}
-    ${card.appNameNote ? `<div class="flag">⚠ ${card.appNameNote}</div>` : ''}
-    ${card.flags.length ? `<div class="flags">${card.flags.map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
-    <button class="expand-btn" onclick="toggleCard('${card.id}')">+ edit status / notes</button>
+    ${d.appAlso ? `<div style="font-size:10px;color:var(--muted)">Also in app: ${d.appAlso.join(' · ')}</div>` : ''}
+    ${d.appNameNote ? `<div class="flag">⚠ ${d.appNameNote}</div>` : ''}
+    ${d.flags.length ? `<div class="flags">${d.flags.map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
+    <button class="expand-btn" onclick="toggleCard('${d.id}')">+ edit status / notes</button>
     <div class="card-detail">
-      <select class="status-select" onchange="updateStatus('${card.id}',this.value)">
-        ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===d.status?'selected':''}>${v.label}</option>`).join('')}
+      <select class="status-select" onchange="updateStatus('${d.id}',this.value)">
+        ${Object.entries(STATUS).map(([k,v])=>`<option value="${k}" ${k===cd.status?'selected':''}>${v.label}</option>`).join('')}
       </select>
-      <textarea class="card-notes" placeholder="Notes, next steps, blockers…" onblur="updateNotes('${card.id}',this.value)">${d.notes}</textarea>
+      <textarea class="card-notes" placeholder="Notes, next steps, blockers…" onblur="updateNotes('${d.id}',this.value)">${cd.notes||''}</textarea>
     </div>
   </div>`;
 }
@@ -811,6 +1056,7 @@ function orphanHTML(o) {
   </div>`;
 }
 
+// ─── Edit handlers ────────────────────────────────────────────────────────────
 function toggleCard(id) {
   const el = document.getElementById('c-'+id);
   el.classList.toggle('expanded');
@@ -818,24 +1064,52 @@ function toggleCard(id) {
 }
 function updateStatus(id, val) { setField(id,'status',val); renderAll(); }
 function updateNotes(id, val)  { setField(id,'notes',val); }
-function updatePrinted(id, val, limit) {
+function updatePrinted(id, val) {
   const n = Math.max(0, parseInt(val) || 0);
   setField(id,'printed',n);
   renderStats();
-  if (limit && n >= limit) renderMain();
+  if (view !== 'grid') renderView();
 }
 function markComplete(id) { setField(id,'status','complete'); renderAll(); }
 function setFilter(f, btn) {
   filter = f;
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
   (btn || document.querySelector(`[data-filter="${f}"]`))?.classList.add('active');
-  renderMain();
+  if (view === 'dashboard') setView('table'); else renderView();
 }
-function searchCards(val) { search = val.toLowerCase(); renderMain(); }
+function setCategory(v) { categoryFilter = v; renderAll(); }
+function searchCards(val) { search = val.toLowerCase(); renderView(); }
+
+// ─── Local preview (dev only) ─────────────────────────────────────────────────
+// On localhost with no saved token, auto-load the repo's data.json read-only so
+// the app is viewable without the GitHub modal. The live site (GitHub Pages) is
+// unaffected — it still uses the token flow. Use the ⚙ Token button to connect.
+const IS_LOCAL_DEV = ['localhost','127.0.0.1','0.0.0.0'].includes(location.hostname) || location.protocol === 'file:';
+async function loadLocalPreview() {
+  hideTokenModal();   // always unblock the view in dev, even if data can't load
+  try {
+    const res = await fetch('data.json?t=' + Date.now());
+    if (!res.ok) throw new Error('data.json ' + res.status);
+    appData = await res.json();
+    setSaveStatus('🔧 Local preview — data.json loaded read-only (Save needs a token)', 'var(--cyan)');
+  } catch (e) {
+    // file:// blocks fetch — show the layout with default/pending data instead.
+    setSaveStatus('🔧 Local preview — open via http://localhost:8753 to load real statuses', 'var(--amber)');
+  }
+  isDirty = false;
+  renderAll();
+}
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
+(function initCatSelect() {
+  const sel = document.getElementById('catSelect');
+  sel.innerHTML = `<option value="all">All categories</option>` +
+    CATEGORIES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+})();
 renderAll(); // render shell immediately
-if (GH.token) { loadData(); } else { showTokenModal(); }
+if (GH.token) { loadData(); }
+else if (IS_LOCAL_DEV) { loadLocalPreview(); }
+else { showTokenModal(); }
 </script>
 </body>
 </html>
