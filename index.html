@@ -226,6 +226,17 @@
   .rel-group { margin-bottom: 12px; }
   .rel-group-h { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
   .rel-group-h span { font-weight: 600; color: var(--muted); }
+  .rel-row { cursor: pointer; }
+  .rel-row:hover td { background: var(--surface); }
+  .rel-caret { display: inline-block; width: 12px; color: var(--muted); font-size: 10px; }
+  .rel-over { color: #f87171; }
+  .rel-detail > td { background: var(--bg); padding: 0 14px 12px 30px !important; }
+  .rel-recon { font-size: 12px; color: var(--muted); padding: 9px 2px; }
+  .rel-inner { width: 100%; border-collapse: collapse; font-size: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+  .rel-inner th { text-align: left; padding: 6px 10px; color: var(--muted); font-weight: 600; font-size: 11px; border-bottom: 1px solid var(--border); }
+  .rel-inner td { padding: 6px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .rel-inner tr.rel-bad td { background: var(--amber-bg); }
+  .rel-issue { color: var(--amber); font-weight: 600; }
   .empty-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; }
 
   /* Plan / matrix view */
@@ -316,7 +327,8 @@
 <div class="stats-bar" id="statsBar"></div>
 
 <div class="controls">
-  <select class="cat-select" id="catSelect" onchange="setCategory(this.value)"></select>
+  <span style="color:var(--muted);font-size:12px;font-weight:600">Scope:</span>
+  <select class="cat-select" id="catSelect" onchange="setCategory(this.value)" title="Global filter — applies to every tab"></select>
   <div class="ctrl-sep"></div>
   <span style="color:var(--muted);font-size:12px">Status:</span>
   <button class="filter-btn active" data-filter="all" onclick="setFilter('all',this)">All</button>
@@ -361,19 +373,28 @@ const STATUS = {
 };
 
 // ─── Categories (top-level filter; each design belongs to exactly one) ─────────
+// `group` rolls categories into higher-level scopes for the global filter
+// (e.g. "All Artist Cards" = artist-jared + artist-athletic).
+const CATEGORY_GROUPS = [
+  { id:'artist',   label:'Artist Cards' },
+  { id:'sports',   label:'Sports' },
+  { id:'personal', label:'Personal' },
+  { id:'other',    label:'Other / Special' },
+];
 const CATEGORIES = [
-  { id:'artist-jared',    label:'Artist Cards – Jared Emerson' },
-  { id:'artist-athletic', label:'Artist Cards – Athletic Art' },
-  { id:'baseball',        label:'Baseball Designs' },
-  { id:'football',        label:'Football Designs' },
-  { id:'micro-wrestling', label:'Micro Wrestling' },
-  { id:'graded-plates',   label:'Graded Plates' },
-  { id:'magical',         label:'Magical Cards' },
-  { id:'philanthropy',    label:'Philanthropic Projects' },
-  { id:'derek-personal',  label:"Derek's Personal Projects" },
-  { id:'matt-personal',   label:"Matt's Personal Projects" },
+  { id:'artist-jared',    label:'Artist Cards – Jared Emerson', group:'artist' },
+  { id:'artist-athletic', label:'Artist Cards – Athletic Art',  group:'artist' },
+  { id:'baseball',        label:'Baseball Designs',             group:'sports' },
+  { id:'football',        label:'Football Designs',             group:'sports' },
+  { id:'micro-wrestling', label:'Micro Wrestling',              group:'other' },
+  { id:'graded-plates',   label:'Graded Plates',                group:'other' },
+  { id:'magical',         label:'Magical Cards',                group:'other' },
+  { id:'philanthropy',    label:'Philanthropic Projects',       group:'other' },
+  { id:'derek-personal',  label:"Derek's Personal Projects",    group:'personal' },
+  { id:'matt-personal',   label:"Matt's Personal Projects",     group:'personal' },
 ];
 const CAT_LABEL = Object.fromEntries(CATEGORIES.map(c => [c.id, c.label]));
+const CAT_GROUP = Object.fromEntries(CATEGORIES.map(c => [c.id, c.group]));
 
 // ─── Set completeness template (the default "24-card set" target) ──────────────
 // A SET is the unit of completeness:
@@ -826,14 +847,20 @@ function matchesSearch(d) {
   const hay = [d.name, d.subject || '', d.artwork || '', d.parallel || '', d.variant || '', d.series || '', CAT_LABEL[d.category]].join(' ').toLowerCase();
   return hay.includes(search);
 }
-// Designs in the current category scope (ignores status filter) — for the dashboard.
-function scopedDesigns() {
-  return DESIGNS.filter(d => categoryFilter === 'all' || d.category === categoryFilter);
+// Global scope test. categoryFilter is 'all', a group id ('group:artist'), or a category id.
+function inScope(d) {
+  if (categoryFilter === 'all') return true;
+  if (categoryFilter.startsWith('group:')) return CAT_GROUP[d.category] === categoryFilter.slice(6);
+  return d.category === categoryFilter;
 }
-// Designs visible in table/grid (category + status filter + search).
+// Designs in the current scope (ignores status filter) — for the dashboard/plan/releases.
+function scopedDesigns() {
+  return DESIGNS.filter(inScope);
+}
+// Designs visible in table/grid (scope + status filter + search).
 function visibleDesigns() {
   return DESIGNS.filter(d => {
-    if (categoryFilter !== 'all' && d.category !== categoryFilter) return false;
+    if (!inScope(d)) return false;
     if (filter === 'flags') { if (!issueCount(d)) return false; }
     else if (filter !== 'all') { if (effectiveStatus(d) !== filter) return false; }
     if (!matchesSearch(d)) return false;
@@ -1207,29 +1234,58 @@ function planHTML() {
 function releasesHTML() {
   const pool = scopedDesigns();
 
-  // ── Zone 1: shipped releases ──
+  // ── Zone 1: shipped releases (click a row to audit its cards) ──
   const seriesMap = {};
   pool.forEach(d => { if (d.series) (seriesMap[d.series] = seriesMap[d.series] || []).push(d); });
+  // A card line is "off" when printed exceeds its limit, or it's printed with no limit set
+  // (which is why a release's Printed can exceed its Card run — exactly the Collection 1 case).
+  const cardIssue = d => {
+    const pl = d.printLimit, pv = printedValue(d);
+    if (pl != null && pv > pl) return `over by ${pv - pl} (printed ${pv} of ${pl})`;
+    if (pl == null && pv > 0)  return `printed ${pv} but no print limit set`;
+    return null;
+  };
   const releases = Object.entries(seriesMap).map(([name, ds]) => ({
-    name,
+    name, ds,
     designCount: ds.length,
     cardRun: ds.reduce((a, d) => a + (d.printLimit || 0), 0),   // Σ serial runs (untiered = 0)
     printed: ds.reduce((a, d) => a + printedValue(d), 0),
     sets: [...new Set(ds.map(d => d.artwork || d.subject).filter(Boolean))],
+    issues: ds.filter(d => cardIssue(d)).length,
   })).sort((a, b) => b.cardRun - a.cardRun || b.designCount - a.designCount);
-  const shippedRows = releases.map(r => {
+  const shippedRows = releases.map((r, i) => {
     const setList = r.sets.slice(0, 4).join(', ') + (r.sets.length > 4 ? `, +${r.sets.length - 4} more` : '');
-    return `<tr>
-      <td><b>${r.name}</b></td>
-      <td class="num">${r.designCount}</td>
-      <td class="num">${r.cardRun || '—'}</td>
-      <td class="num">${r.printed}</td>
-      <td class="d-sub">${setList || '—'}</td>
-    </tr>`;
+    const delta = r.printed - r.cardRun;
+    const flag = r.issues ? `<span class="flagdot">⚠${r.issues}</span>` : '';
+    const detailRows = r.ds.slice().sort((a, b) => (b.printLimit || 0) - (a.printLimit || 0)).map(d => {
+      const iss = cardIssue(d), es = effectiveStatus(d), sm = statusMeta(es);
+      return `<tr class="${iss ? 'rel-bad' : ''}">
+        <td>${d.name}${d.appDesign ? `<div class="d-sub">App: ${d.appDesign}</div>` : ''}</td>
+        <td class="num">${tierLabel(d.printLimit)}</td>
+        <td class="num">${printedValue(d)}</td>
+        <td><span class="badge ${sm.badge}">${es === 'printing' ? `Printing ${printedValue(d)}/${d.printLimit}` : sm.label}</span></td>
+        <td class="d-sub">${iss ? `<span class="rel-issue">⚠ ${iss}</span>` : ''}</td>
+      </tr>`;
+    }).join('');
+    const recon = `Card run <b>${r.cardRun}</b> · Printed <b class="${delta ? 'rel-over' : ''}">${r.printed}</b>${delta ? ` · <b class="rel-over">${delta > 0 ? '+' : ''}${delta}</b> vs run` : ' · ✓ matches'}`;
+    return `<tr class="rel-row" onclick="toggleRelease(${i})">
+        <td><span class="rel-caret" id="relcaret-${i}">▸</span> <b>${r.name}</b> ${flag}</td>
+        <td class="num">${r.designCount}</td>
+        <td class="num">${r.cardRun || '—'}</td>
+        <td class="num ${delta > 0 ? 'rel-over' : ''}">${r.printed}</td>
+        <td class="d-sub">${setList || '—'}</td>
+      </tr>
+      <tr class="rel-detail hidden" id="reldetail-${i}"><td colspan="5">
+        <div class="rel-recon">${recon}</div>
+        <table class="rel-inner">
+          <thead><tr><th>Design</th><th class="num">Tier</th><th class="num">Printed</th><th>Status</th><th>Note</th></tr></thead>
+          <tbody>${detailRows}</tbody>
+        </table>
+      </td></tr>`;
   }).join('');
   const totalCards = releases.reduce((a, r) => a + r.cardRun, 0);
   const zone1 = `<div class="dash-section">
-    <div class="dash-h">Shipped releases <span>what each drop contained · ${releases.length} series · ${totalCards} serialized cards across all releases</span></div>
+    <div class="dash-h">Shipped releases <span>click a row to audit its cards · ${releases.length} series · ${totalCards} serialized cards total</span></div>
     <table class="rollup">
       <thead><tr><th>Series</th><th class="num">Designs</th><th class="num">Card run</th><th class="num">Printed</th><th>Sets / paintings spanned</th></tr></thead>
       <tbody>${shippedRows || `<tr><td colspan="5" class="d-sub">No series in scope.</td></tr>`}</tbody>
@@ -1285,8 +1341,15 @@ function releasesHTML() {
     ${untapped.length ? `<div class="pips">${untappedChips}</div>` : `<div class="empty-note">Every set in scope is in at least one release.</div>`}
   </div>`;
 
-  const intro = `<div class="dash-section" style="margin-bottom:18px"><div class="mx-sub">Plan the next <b style="color:var(--text)">release</b> (a drop pulls cards from one or more sets; sets can span several series). Tip: use the category filter to scope to one line before planning.</div></div>`;
+  const intro = `<div class="dash-section" style="margin-bottom:18px"><div class="mx-sub">Plan the next <b style="color:var(--text)">release</b> (a drop pulls cards from one or more sets; sets can span several series). Tip: use the <b style="color:var(--text)">Scope</b> filter (top-left) to focus one line before planning.</div></div>`;
   return intro + zone1 + readySection + almostSection + untappedSection;
+}
+function toggleRelease(i) {
+  const row = document.getElementById('reldetail-' + i);
+  const caret = document.getElementById('relcaret-' + i);
+  if (!row) return;
+  const nowHidden = row.classList.toggle('hidden');
+  if (caret) caret.textContent = nowHidden ? '▸' : '▾';
 }
 
 // ─── Grid view (original card layout) ─────────────────────────────────────────
@@ -1472,8 +1535,16 @@ async function refreshData() {
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (function initCatSelect() {
   const sel = document.getElementById('catSelect');
-  sel.innerHTML = `<option value="all">All categories</option>` +
-    CATEGORIES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+  let html = `<option value="all">All cards (every category)</option>`;
+  CATEGORY_GROUPS.forEach(g => {
+    const cats = CATEGORIES.filter(c => c.group === g.id);
+    if (!cats.length) return;
+    html += `<optgroup label="${g.label}">`;
+    if (cats.length > 1) html += `<option value="group:${g.id}">▸ All ${g.label}</option>`;
+    html += cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+    html += `</optgroup>`;
+  });
+  sel.innerHTML = html;
 })();
 renderAll(); // render shell immediately
 renderFreshness();
