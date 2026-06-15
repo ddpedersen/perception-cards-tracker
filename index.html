@@ -213,10 +213,19 @@
   .pips { display: flex; gap: 4px; flex-wrap: wrap; }
   .pip { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 10px; white-space: nowrap; }
   .pip-ok { background: var(--green-bg); color: var(--green); }
+  .pip-warn { background: var(--amber-bg); color: var(--amber); }
   .pip-miss { background: var(--red-bg); color: #f87171; }
   .complete-tag { font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px; }
   .complete-tag.yes { background: var(--green-bg); color: var(--green); }
   .complete-tag.no { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .freshness { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+  .fresh-badge { font-size: 11px; font-weight: 600; padding: 2px 9px; border-radius: 10px; background: var(--surface2); color: var(--muted); border: 1px solid var(--border); cursor: help; }
+  .fresh-badge.ok { color: var(--green); }
+  .fresh-badge.warn { color: var(--amber); border-color: #4a2e00; }
+  .fresh-badge.stale { color: #f87171; border-color: #4a1010; }
+  .rel-group { margin-bottom: 12px; }
+  .rel-group-h { font-size: 12px; font-weight: 700; color: var(--text); margin-bottom: 5px; }
+  .rel-group-h span { font-weight: 600; color: var(--muted); }
   .empty-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; }
 
   /* Plan / matrix view */
@@ -286,10 +295,11 @@
 <header>
   <div class="header-left">
     <h1>⚡ Perception Cards – Design Tracker</h1>
-    <p>Data stored in GitHub · Status &amp; print count are manual · App data as of June 2026</p>
+    <div class="freshness" id="freshness"></div>
   </div>
   <div class="header-right">
     <span id="saveStatus" style="color:var(--muted);font-size:12px"></span>
+    <button class="token-btn" id="refreshBtn" onclick="refreshData()" title="Re-pull data.json (file statuses) from GitHub">↻ Refresh</button>
     <button class="save-btn" id="saveBtn" onclick="saveData()">Save</button>
     <button class="token-btn" onclick="showTokenModal()" title="Change GitHub token">⚙ Token</button>
   </div>
@@ -298,6 +308,7 @@
 <div class="view-tabs" id="viewTabs">
   <button class="view-tab" data-view="dashboard" onclick="setView('dashboard')">📊 Dashboard</button>
   <button class="view-tab" data-view="plan" onclick="setView('plan')">🧭 Plan</button>
+  <button class="view-tab" data-view="releases" onclick="setView('releases')">📦 Releases</button>
   <button class="view-tab active" data-view="table" onclick="setView('table')">📋 Designs</button>
   <button class="view-tab" data-view="grid" onclick="setView('grid')">🗂 Grid</button>
 </div>
@@ -855,7 +866,19 @@ function setReport(set) {
   const tmplLimits = new Set(tmpl.map(t => t.limit));
   const slots = tmpl.map(t => {
     const have = byLimit[t.limit] || [];
-    return { ...t, have: have.length, filled: Math.min(have.length, t.count), over: Math.max(0, have.length - t.count) };
+    const targetCopies = t.limit * t.count;
+    // Copies physically printed at this tier, capped at the template target so
+    // extras (designs beyond the slot count) can't inflate the bar past 100%.
+    const printedCopies = Math.min(targetCopies, have.reduce((a, d) => a + printedValue(d), 0));
+    return {
+      ...t,
+      have: have.length,
+      filled: Math.min(have.length, t.count),       // design slots filled (still used by some views)
+      over: Math.max(0, have.length - t.count),
+      targetCopies,                                  // copies this tier should produce (limit × count)
+      printedCopies,                                 // copies printed so far (capped)
+      slotComplete: printedCopies >= targetCopies,   // tier done = all its copies printed
+    };
   });
   const extras = [];
   Object.keys(byLimit).forEach(l => { if (!tmplLimits.has(Number(l))) extras.push(...byLimit[l]); });
@@ -863,9 +886,10 @@ function setReport(set) {
   const targetDesigns = tmpl.reduce((a, t) => a + t.count, 0);
   const targetCards = tmpl.reduce((a, t) => a + t.limit * t.count, 0);
   const filledDesigns = slots.reduce((a, s) => a + s.filled, 0);
-  const complete = slots.every(s => s.filled >= s.count);
+  const printedCards = slots.reduce((a, s) => a + s.printedCopies, 0);   // total copies printed toward the set
+  const complete = slots.every(s => s.slotComplete);                    // set done = every copy printed
   const designComplete = designs.filter(d => effectiveStatus(d) === 'complete').length;
-  return { ...set, slots, extras, untiered, targetDesigns, targetCards, filledDesigns, complete, designComplete, total: designs.length };
+  return { ...set, slots, extras, untiered, targetDesigns, targetCards, filledDesigns, printedCards, complete, designComplete, total: designs.length };
 }
 
 // ─── Render dispatch ──────────────────────────────────────────────────────────
@@ -876,6 +900,7 @@ function renderView() {
   const main = document.getElementById('main');
   if (view === 'dashboard') main.innerHTML = dashboardHTML();
   else if (view === 'plan') main.innerHTML = planHTML();
+  else if (view === 'releases') main.innerHTML = releasesHTML();
   else if (view === 'table') main.innerHTML = tableHTML();
   else main.innerHTML = gridHTML();
 }
@@ -998,7 +1023,7 @@ function dashboardHTML() {
   const pool = scopedDesigns();
   const subjects = [...new Set(pool.filter(d => d.subject).map(d => d.subject))];
   const reports = setsIn(pool).map(setReport)
-    .sort((a, b) => (b.filledDesigns - a.filledDesigns) || (b.total - a.total) || a.name.localeCompare(b.name));
+    .sort((a, b) => (b.printedCards - a.printedCards) || (b.total - a.total) || a.name.localeCompare(b.name));
 
   const statusCount = { complete:0, inprogress:0, printing:0, pending:0, onhold:0, archived:0 };
   pool.forEach(d => { const st = effectiveStatus(d); statusCount[st] = (statusCount[st]||0) + 1; });
@@ -1018,9 +1043,14 @@ function dashboardHTML() {
   // By set (completeness scorecard — one row per painting for artist cards, per subject otherwise)
   const setRows = reports.map(r => {
     const pips = r.slots.map(s => {
-      const ok = s.filled >= s.count;
-      const extra = s.over > 0 ? ` +${s.over}` : '';
-      return `<span class="pip ${ok?'pip-ok':'pip-miss'}" title="${s.label}: have ${s.have}, need ${s.count}">${s.label} ${s.filled}/${s.count}${extra}</span>`;
+      const cls = s.slotComplete ? 'pip-ok' : (s.printedCopies > 0 ? 'pip-warn' : 'pip-miss');
+      const left = s.targetCopies - s.printedCopies;
+      // /1 tier = several distinct one-of-ones, so word it; numbered tiers show printed/target.
+      const text = s.limit === 1
+        ? (s.slotComplete ? `1/1 · ${s.count} done` : s.printedCopies > 0 ? `1/1 · ${left} to go` : `1/1 · need ${s.count}`)
+        : `${s.printedCopies}/${s.targetCopies}`;
+      const tip = `${s.label}: ${s.printedCopies}/${s.targetCopies} copies printed${s.have ? ` · ${s.have} design(s) made` : ' · no design yet'}`;
+      return `<span class="pip ${cls}" title="${tip}">${text}</span>`;
     }).join('');
     const cats = [...new Set(r.designs.map(d => CAT_LABEL[d.category]))].join(', ');
     const subLine = r.artwork ? `🎨 Painting · ${r.subject} · ${cats}` : cats;
@@ -1029,13 +1059,13 @@ function dashboardHTML() {
       <td class="num">${r.total}</td>
       <td><div class="pips">${pips}</div>${r.extras.length?`<div class="d-sub" style="margin-top:4px">Extras: ${r.extras.map(d=>tierLabel(d.printLimit)).join(', ')}</div>`:''}${r.untiered.length?`<div class="d-sub">Untiered: ${r.untiered.length}</div>`:''}</td>
       <td class="num">${r.designComplete}/${r.total}</td>
-      <td><span class="complete-tag ${r.complete?'yes':'no'}">${r.complete?'✓ Complete':r.filledDesigns+'/'+r.targetDesigns}</span><div class="d-sub" style="margin-top:4px">${r.targetCards}-card set</div></td>
+      <td><span class="complete-tag ${r.complete?'yes':'no'}">${r.complete?'✓ Complete':r.printedCards+' / '+r.targetCards+' cards'}</span><div class="d-sub" style="margin-top:4px">${r.targetCards}-card set</div></td>
     </tr>`;
   }).join('');
   const setSection = `<div class="dash-section">
-    <div class="dash-h">By Set <span>artist cards: one set per painting · everything else: per subject · default 24-card template (/10 · /5 · /3 · /2 · 1/1×4)</span></div>
+    <div class="dash-h">By Set <span>copies printed vs. the set's target · artist cards: one set per painting · everything else: per subject · default 24-card template (/10 · /5 · /3 · /2 · 1/1×4)</span></div>
     <table class="rollup">
-      <thead><tr><th>Set</th><th class="num">Designs</th><th>Tier coverage</th><th class="num">Done</th><th>Progress</th></tr></thead>
+      <thead><tr><th>Set</th><th class="num">Designs</th><th>Cards printed by tier</th><th class="num">Designs done</th><th>Cards printed</th></tr></thead>
       <tbody>${setRows || `<tr><td colspan="5" class="d-sub">No sets in scope.</td></tr>`}</tbody>
     </table>
   </div>`;
@@ -1097,20 +1127,20 @@ function planHTML() {
 
   // ── A. Closest to completing ──
   const incomplete = reports.filter(r => !r.complete)
-    .sort((a, b) => (b.filledDesigns / b.targetDesigns) - (a.filledDesigns / a.targetDesigns) || (b.total - a.total) || a.name.localeCompare(b.name));
+    .sort((a, b) => (b.printedCards / b.targetCards) - (a.printedCards / a.targetCards) || (b.total - a.total) || a.name.localeCompare(b.name));
   const completeCount = reports.filter(r => r.complete).length;
   const TOP = 12;
   const shown = incomplete.slice(0, TOP);
   const nextRows = shown.map(r => {
-    const pct = Math.round(100 * r.filledDesigns / r.targetDesigns);
-    const needs = r.slots.filter(s => s.filled < s.count)
-      .map(s => `<span class="need-pip">need ${s.label}${s.count - s.filled > 1 ? ` ×${s.count - s.filled}` : ''}</span>`).join('');
+    const pct = Math.round(100 * r.printedCards / r.targetCards);
+    const needs = r.slots.filter(s => !s.slotComplete)
+      .map(s => `<span class="need-pip">${s.label}: ${s.targetCopies - s.printedCopies} to print</span>`).join('');
     const extras = r.extras.length ? `<span class="mx-sub">· ${r.extras.length} extra</span>` : '';
     const untiered = r.untiered.length ? `<span class="mx-sub">· ${r.untiered.length} untiered</span>` : '';
     return `<tr>
       <td class="setcol"><span class="mx-set">${r.name}</span><div class="mx-sub">${r.artwork ? `🎨 ${r.subject}` : (CAT_LABEL[r.designs[0].category] || '')}</div></td>
-      <td style="min-width:120px"><div class="bar"><span style="width:${pct}%"></span></div><div class="mx-sub">${r.filledDesigns}/${r.targetDesigns} template designs ${extras}${untiered}</div></td>
-      <td><div class="next-need">${needs || '<span class="mx-sub">all template tiers filled — add extras only</span>'}</div></td>
+      <td style="min-width:120px"><div class="bar"><span style="width:${pct}%"></span></div><div class="mx-sub">${r.printedCards}/${r.targetCards} cards printed ${extras}${untiered}</div></td>
+      <td><div class="next-need">${needs || '<span class="mx-sub">all copies printed — add extras only</span>'}</div></td>
     </tr>`;
   }).join('');
   const moreNote = incomplete.length > TOP ? `<div class="mx-sub" style="margin-top:8px">+ ${incomplete.length - TOP} more in-progress sets — see Dashboard › By Set for the full list.</div>` : '';
@@ -1166,6 +1196,97 @@ function planHTML() {
 
   const intro = `<div class="dash-section" style="margin-bottom:18px"><div class="mx-sub">Two questions: <b style="color:var(--text)">what's almost done</b> (finish the set) and <b style="color:var(--text)">what doesn't exist yet</b> (open slots in the matrix).</div></div>`;
   return intro + sectionA + sectionB;
+}
+
+// ─── Releases view (plan at the drop level) ───────────────────────────────────
+// A SERIES is a release/drop that pulls cards from one or more SETS — and sets
+// legitimately span multiple series. Zone 1: what each release shipped. Zone 2:
+// the candidate pool for the next drop, auto-derived — (a) finished-but-unreleased
+// cards, (b) started sets to round out, (c) untapped art. Respects the category
+// filter, so scope to one line (e.g. Jared Emerson) before planning a drop.
+function releasesHTML() {
+  const pool = scopedDesigns();
+
+  // ── Zone 1: shipped releases ──
+  const seriesMap = {};
+  pool.forEach(d => { if (d.series) (seriesMap[d.series] = seriesMap[d.series] || []).push(d); });
+  const releases = Object.entries(seriesMap).map(([name, ds]) => ({
+    name,
+    designCount: ds.length,
+    cardRun: ds.reduce((a, d) => a + (d.printLimit || 0), 0),   // Σ serial runs (untiered = 0)
+    printed: ds.reduce((a, d) => a + printedValue(d), 0),
+    sets: [...new Set(ds.map(d => d.artwork || d.subject).filter(Boolean))],
+  })).sort((a, b) => b.cardRun - a.cardRun || b.designCount - a.designCount);
+  const shippedRows = releases.map(r => {
+    const setList = r.sets.slice(0, 4).join(', ') + (r.sets.length > 4 ? `, +${r.sets.length - 4} more` : '');
+    return `<tr>
+      <td><b>${r.name}</b></td>
+      <td class="num">${r.designCount}</td>
+      <td class="num">${r.cardRun || '—'}</td>
+      <td class="num">${r.printed}</td>
+      <td class="d-sub">${setList || '—'}</td>
+    </tr>`;
+  }).join('');
+  const totalCards = releases.reduce((a, r) => a + r.cardRun, 0);
+  const zone1 = `<div class="dash-section">
+    <div class="dash-h">Shipped releases <span>what each drop contained · ${releases.length} series · ${totalCards} serialized cards across all releases</span></div>
+    <table class="rollup">
+      <thead><tr><th>Series</th><th class="num">Designs</th><th class="num">Card run</th><th class="num">Printed</th><th>Sets / paintings spanned</th></tr></thead>
+      <tbody>${shippedRows || `<tr><td colspan="5" class="d-sub">No series in scope.</td></tr>`}</tbody>
+    </table>
+  </div>`;
+
+  // ── Zone 2: plan the next drop ──
+  const reports = setsIn(pool).map(setReport);
+
+  // (a) Ready to release: art finished (complete or printing) but not in any series yet
+  const ready = pool.filter(d => !d.series && ['complete', 'printing'].includes(effectiveStatus(d)));
+  const readyBySet = {};
+  ready.forEach(d => { const k = d.artwork || d.subject || d.name; (readyBySet[k] = readyBySet[k] || []).push(d); });
+  const readyBlocks = Object.entries(readyBySet).sort((a, b) => b[1].length - a[1].length).map(([set, ds]) =>
+    `<div class="rel-group"><div class="rel-group-h">${set} <span>· ${ds.length}</span></div>
+      <div class="pips">${ds.map(d => `<span class="vp vp-have" title="${d.name}">${d.name.replace(/\s*\(.*\)$/, '')} · ${tierLabel(d.printLimit)}</span>`).join('')}</div></div>`
+  ).join('');
+  const readySection = `<div class="dash-section">
+    <div class="dash-h">🟢 Ready to release now <span>finished art, not yet in any drop — ${ready.length} design(s)</span></div>
+    ${ready.length ? readyBlocks : `<div class="empty-note">Nothing finished-but-unreleased in scope.</div>`}
+  </div>`;
+
+  // (b) Finish to release: sets already in ≥1 release but not complete — extend in the next drop
+  const released = r => r.designs.some(d => d.series);
+  const almost = reports.filter(r => released(r) && !r.complete)
+    .sort((a, b) => (b.printedCards / b.targetCards) - (a.printedCards / a.targetCards));
+  const almostRows = almost.map(r => {
+    const pct = Math.round(100 * r.printedCards / r.targetCards);
+    const needs = r.slots.filter(s => !s.slotComplete)
+      .map(s => `<span class="need-pip">${s.label}: ${s.targetCopies - s.printedCopies} to print</span>`).join('');
+    return `<tr>
+      <td class="setcol"><span class="mx-set">${r.name}</span><div class="mx-sub">${r.artwork ? `🎨 ${r.subject}` : (CAT_LABEL[r.designs[0].category] || '')}</div></td>
+      <td style="min-width:120px"><div class="bar"><span style="width:${pct}%"></span></div><div class="mx-sub">${r.printedCards}/${r.targetCards} cards</div></td>
+      <td><div class="next-need">${needs}</div></td>
+    </tr>`;
+  }).join('');
+  const almostSection = `<div class="dash-section">
+    <div class="dash-h">🟡 Finish to release <span>sets you've started — round these out for a drop</span></div>
+    <div class="mx-wrap"><table class="matrix">
+      <thead><tr><th class="setcol">Set</th><th>Printed</th><th>To finish</th></tr></thead>
+      <tbody>${almostRows || `<tr><td colspan="3" class="mx-sub">No partially-printed sets in scope.</td></tr>`}</tbody>
+    </table></div>
+  </div>`;
+
+  // (c) Not yet in any release: sets with zero released designs — new / awaiting a drop
+  const untapped = reports.filter(r => !released(r)).sort((a, b) => a.name.localeCompare(b.name));
+  const untappedChips = untapped.map(r => {
+    const rdy = r.designs.filter(d => ['complete', 'printing'].includes(effectiveStatus(d))).length;
+    return `<span class="vp vp-cand" title="${r.total} design(s)${rdy ? `, ${rdy} print-ready` : ''}, not in any release yet">${r.name}${rdy ? ` · 🟢 ${rdy} ready` : ` · ${r.total}`}</span>`;
+  }).join('');
+  const untappedSection = `<div class="dash-section">
+    <div class="dash-h">⚪ Not yet in any release <span>no drop assigned — new or awaiting a release · ${untapped.length} set(s) · 🟢 = has print-ready cards</span></div>
+    ${untapped.length ? `<div class="pips">${untappedChips}</div>` : `<div class="empty-note">Every set in scope is in at least one release.</div>`}
+  </div>`;
+
+  const intro = `<div class="dash-section" style="margin-bottom:18px"><div class="mx-sub">Plan the next <b style="color:var(--text)">release</b> (a drop pulls cards from one or more sets; sets can span several series). Tip: use the category filter to scope to one line before planning.</div></div>`;
+  return intro + zone1 + readySection + almostSection + untappedSection;
 }
 
 // ─── Grid view (original card layout) ─────────────────────────────────────────
@@ -1302,6 +1423,52 @@ async function loadLocalPreview() {
   renderAll();
 }
 
+// ─── Data freshness ───────────────────────────────────────────────────────────
+// Two halves, two speeds. FILE status (pending/inprogress/complete) auto-syncs
+// from Dropbox every 6h via GitHub Actions → data.json. APP-side data (series,
+// printed counts, print limits) is a periodic MANUAL scrape of app.perceptionexp.com
+// (no API) via Claude-in-Chrome. Bump APP_DATA_CAPTURED whenever that scrape is re-run.
+const APP_DATA_CAPTURED = '2026-06-11';
+let fileSyncDate = null;   // Date of the last data.json commit (file half)
+
+function relTime(d) {
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 90) return 'just now';
+  const m = Math.floor(s / 60); if (m < 60) return m + 'm ago';
+  const h = Math.floor(m / 60); if (h < 48) return h + 'h ago';
+  return Math.floor(h / 24) + 'd ago';
+}
+function fmtDate(iso) {
+  return new Date(iso + 'T00:00:00').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+function renderFreshness() {
+  const el = document.getElementById('freshness');
+  if (!el) return;
+  const appDays = Math.floor((Date.now() - new Date(APP_DATA_CAPTURED + 'T00:00:00').getTime()) / 86400000);
+  const appStale = appDays > 14;
+  const fileTxt = fileSyncDate ? `data changed ${relTime(fileSyncDate)}` : 'auto-syncs every 6h';
+  el.innerHTML =
+    `<span class="fresh-badge ok" title="File status (pending / in-progress / complete) auto-syncs from Dropbox every 6 hours via GitHub Actions. Use ↻ Refresh to re-pull.">📁 Files · ${fileTxt}</span>` +
+    `<span class="fresh-badge ${appStale ? 'stale' : 'warn'}" title="Series, printed counts and print limits come from a manual scrape of app.perceptionexp.com (no API) via Claude-in-Chrome. This is a point-in-time snapshot — re-run the scrape to refresh.">🗃 App data · captured ${fmtDate(APP_DATA_CAPTURED)}${appStale ? ` · ${appDays}d old` : ''}</span>`;
+}
+async function fetchFileSyncTime() {
+  if (!GH.token) return;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${GH.owner}/${GH.repo}/commits?path=${GH.file}&sha=${GH.branch}&per_page=1`,
+      { headers: { Authorization: `token ${GH.token}`, Accept: 'application/vnd.github.v3+json' } });
+    if (!res.ok) return;
+    const arr = await res.json();
+    if (arr[0]) { fileSyncDate = new Date(arr[0].commit.committer.date); renderFreshness(); }
+  } catch (e) { /* best-effort; freshness still shows the static fallback */ }
+}
+async function refreshData() {
+  const btn = document.getElementById('refreshBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '↻ …'; }
+  if (GH.token) { await loadData(); await fetchFileSyncTime(); }
+  else if (IS_LOCAL_DEV) { await loadLocalPreview(); }
+  if (btn) { btn.disabled = false; btn.textContent = '↻ Refresh'; }
+}
+
 // ─── Init ─────────────────────────────────────────────────────────────────────
 (function initCatSelect() {
   const sel = document.getElementById('catSelect');
@@ -1309,7 +1476,8 @@ async function loadLocalPreview() {
     CATEGORIES.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
 })();
 renderAll(); // render shell immediately
-if (GH.token) { loadData(); }
+renderFreshness();
+if (GH.token) { loadData(); fetchFileSyncTime(); }
 else if (IS_LOCAL_DEV) { loadLocalPreview(); }
 else { showTokenModal(); }
 </script>
