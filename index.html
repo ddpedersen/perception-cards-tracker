@@ -821,6 +821,19 @@ function statusMeta(s) { return s === 'printing' ? PRINTING : STATUS[s]; }
 
 function tierLabel(pl) { return pl == null ? '—' : (pl === 1 ? '1/1' : '/' + pl); }
 
+// Canonical NAMING.md name for the folder / files / app design:
+//   Anchor - Parallel - Variant - Tier - Product   (drop any segment that's absent)
+// Product (Plate/Box) isn't a stored field, so it's inferred from the design name/category.
+function keyName(d) {
+  const parts = [d.artwork || d.subject || d.name];
+  if (d.parallel) parts.push(d.parallel);
+  if (d.variant)  parts.push(d.variant);
+  if (d.printLimit != null) parts.push(d.printLimit === 1 ? '1of1' : 'of' + d.printLimit);
+  if (d.category === 'graded-plates' || /graded plate/i.test(d.name)) parts.push('Plate');
+  else if (/custom box/i.test(d.name)) parts.push('Box');
+  return parts.join(' - ');
+}
+
 // Derived naming/consistency alerts (computed at render, never stored in flags):
 //  • a variant with no parallel → the file/app name skipped the parallel level
 //  • parallel/variant not in the PARALLELS vocabulary → typo or vocab gap
@@ -1039,6 +1052,7 @@ function tableHTML() {
             </select>
             ${es === 'printing' ? `<span class="d-sub">→ shows as <b style="color:#7cc4ff">Printing ${pv}/${d.printLimit}</b> until fully printed</span>` : ''}
           </div>
+          <div style="margin-bottom:8px"><span class="d-sub">Convention name: </span><span class="rename-tmpl">${keyName(d)}</span><button class="copy-btn" onclick="copyText('${keyName(d).replace(/'/g, "\\'")}', this)">copy</button></div>
           ${issueCount(d) || d.appNameNote || d.appAlso ? `<div class="note-flags">
             ${(d.flags||[]).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
             ${namingAlerts(d).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
@@ -1438,6 +1452,7 @@ function cardHTML(d) {
     ${d.appAlso ? `<div style="font-size:10px;color:var(--muted)">Also in app: ${d.appAlso.join(' · ')}</div>` : ''}
     ${d.appNameNote ? `<div class="flag">⚠ ${d.appNameNote}</div>` : ''}
     ${issueCount(d) ? `<div class="flags">${[...d.flags, ...namingAlerts(d)].map(f=>`<div class="flag">⚠ ${f}</div>`).join('')}</div>` : ''}
+    <div style="font-size:10px"><span style="color:var(--muted)">Convention name: </span><span class="rename-tmpl">${keyName(d)}</span><button class="copy-btn" onclick="copyText('${keyName(d).replace(/'/g, "\\'")}', this)">copy</button></div>
     <button class="expand-btn" onclick="toggleCard('${d.id}')">+ edit status / notes</button>
     <div class="card-detail">
       <select class="status-select" onchange="updateStatus('${d.id}',this.value)">
