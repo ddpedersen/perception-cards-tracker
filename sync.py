@@ -212,18 +212,25 @@ def list_folder_direct(token, path, path_root=None):
         entries.extend(data.get('entries', []))
     return entries
 
-def detect_status(token, rel_path, path_root=None):
-    """Detect status from files in a folder."""
-    full_path = f"{DBX_ROOT}/{rel_path}"
-    entries = list_folder_direct(token, full_path, path_root)
-    files = [e for e in entries if e.get('.tag') == 'file']
-    has_pdf = any(e['name'].lower().endswith('.pdf') for e in files)
-    has_ai  = any(e['name'].lower().endswith('.ai')  for e in files)
+def status_from_files(filenames):
+    """Status from a folder's .ai/.pdf file list."""
+    has_pdf = any(n.lower().endswith('.pdf') for n in filenames)
+    has_ai  = any(n.lower().endswith('.ai')  for n in filenames)
     if has_pdf:
         return 'complete'
     if has_ai:
         return 'inprogress'
     return 'pending'
+
+def list_design_files(token, rel_path, path_root, cache):
+    """Cached list of .ai/.pdf filenames in a folder (folders are shared across cards)."""
+    if rel_path in cache:
+        return cache[rel_path]
+    entries = list_folder_direct(token, f"{DBX_ROOT}/{rel_path}", path_root)
+    names = sorted(e['name'] for e in entries
+                   if e.get('.tag') == 'file' and e['name'].lower().endswith(('.ai', '.pdf')))
+    cache[rel_path] = names
+    return names
 
 # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Status logic ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 def upgrade_status(current, detected):
@@ -285,8 +292,12 @@ def main():
     print(f'  Loaded {len(data)} existing entries, SHA={sha}')
 
     changes = []
+    folder_cache = {}
+    files_payload = {}
     for card_id, rel_path in CARD_PATHS.items():
-        detected = detect_status(dbx_token, rel_path, path_root)
+        filenames = list_design_files(dbx_token, rel_path, path_root, folder_cache)
+        files_payload[rel_path] = filenames
+        detected = status_from_files(filenames)
         current  = data.get(card_id, {}).get('status', 'pending')
         upgraded = upgrade_status(current, detected)
 
@@ -300,7 +311,14 @@ def main():
         else:
             print(f'  no change {card_id}: {current}')
 
-    if changes:
+    # File inventory for the app's design-discovery (filenames are parsed app-side,
+    # where the parallel/variant vocabulary lives). Only adds data; never alters status.
+    files_changed = data.get('_files') != files_payload
+    data['_files'] = files_payload
+    if files_changed:
+        print('  _files inventory changed (new/removed files detected)')
+
+    if changes or files_changed:
         print(f'\nSaving {len(changes)} change(s) to GitHub...')
         new_sha = save_data_json(data, sha)
         print(f'Saved! New SHA: {new_sha}')

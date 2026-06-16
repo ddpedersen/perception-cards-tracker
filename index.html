@@ -834,6 +834,44 @@ function keyName(d) {
   return parts.join(' - ');
 }
 
+// ─── Design discovery from files (the planned NAMING.md parser, run app-side) ──────
+// sync.py writes appData._files = { "<folder>": ["<filename>", …] }. We parse those
+// names against the live vocabulary (anchors from DESIGNS + PARALLELS) here — that's
+// why the parser lives in the app, not in sync.py. A conformant name that isn't a
+// tracked design surfaces as a "discovered" design; legacy names don't parse → ignored.
+function parseKeyName(name) {
+  const segs = name.split(' - ').map(s => s.trim()).filter(Boolean);
+  const anchors = new Set(DESIGNS.map(d => d.artwork || d.subject || d.name));
+  if (!segs.length || !anchors.has(segs[0])) return null;
+  let i = 1, parallel = null, variant = null, tier = null, product = null;
+  const P = PARALLELS.find(p => p.name === segs[i]);
+  if (P) { parallel = segs[i++]; if (i < segs.length && P.variants.some(v => v.name === segs[i])) variant = segs[i++]; }
+  if (i < segs.length && /^(1of1|of\d+)$/.test(segs[i])) tier = segs[i++];
+  if (i < segs.length && /^(Plate|Box)$/.test(segs[i])) product = segs[i++];
+  if (i !== segs.length) return null;          // leftover unparsed segments → not conformant
+  return { anchor: segs[0], parallel, variant, tier, product, name };
+}
+function discoveredDesigns() {
+  const inv = appData._files || {};
+  const known = new Set(DESIGNS.map(keyName));
+  const found = {};
+  Object.entries(inv).forEach(([folder, names]) => {
+    (names || []).forEach(fn => {
+      let base = fn.replace(/\.(ai|pdf)$/i, '');
+      const m = base.match(/\s-\s(Front|Back)$/i);
+      const role = m ? m[1] : (/\.ai$/i.test(fn) ? 'AI' : 'PDF');
+      if (m) base = base.slice(0, m.index);
+      if (known.has(base)) return;             // already a tracked design's keyed name
+      const parsed = parseKeyName(base);
+      if (!parsed) return;                      // legacy / non-conformant → ignore
+      if (!parsed.parallel && parsed.tier == null && !parsed.product) return;  // anchor-only → too vague
+      (found[base] = found[base] || { ...parsed, folder, roles: new Set() }).roles.add(role);
+    });
+  });
+  return Object.values(found).map(f => ({ ...f, roles: [...f.roles] }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 // Derived naming/consistency alerts (computed at render, never stored in flags):
 //  • a variant with no parallel → the file/app name skipped the parallel level
 //  • parallel/variant not in the PARALLELS vocabulary → typo or vocab gap
@@ -1173,7 +1211,24 @@ function dashboardHTML() {
     </table>
   </div>`;
 
-  return tiles + setSection + seriesSection + catSection;
+  // Discovered-in-files — designs the sync found in Dropbox (named to the key) that
+  // aren't tracked yet. This is the files-first "don't lose a new variant" surface.
+  const discovered = discoveredDesigns();
+  const discoveredSection = discovered.length ? `<div class="dash-section">
+    <div class="dash-h">🆕 Discovered in files <span>named to the key in Dropbox but not yet a tracked design — ${discovered.length}</span></div>
+    <table class="rollup">
+      <thead><tr><th>Name (from files)</th><th>Painting / Subject</th><th>Parallel › Variant</th><th class="num">Tier</th><th>Files</th></tr></thead>
+      <tbody>${discovered.map(d => `<tr>
+        <td><b>${d.name}</b><div class="d-sub">📁 ${d.folder}</div></td>
+        <td class="d-sub">${d.anchor}</td>
+        <td class="d-sub">${d.parallel ? d.parallel + (d.variant ? ` › ${d.variant}` : '') : '—'}</td>
+        <td class="num">${d.tier || '—'}${d.product ? ' · ' + d.product : ''}</td>
+        <td class="d-sub">${d.roles.join(', ') || '—'}</td>
+      </tr>`).join('')}</tbody>
+    </table>
+  </div>` : '';
+
+  return tiles + discoveredSection + setSection + seriesSection + catSection;
 }
 
 // ─── Plan view ("what to work on next") ───────────────────────────────────────
