@@ -212,10 +212,10 @@ def list_folder_direct(token, path, path_root=None):
         entries.extend(data.get('entries', []))
     return entries
 
-def status_from_files(filenames):
-    """Status from a folder's .ai/.pdf file list."""
-    has_pdf = any(n.lower().endswith('.pdf') for n in filenames)
-    has_ai  = any(n.lower().endswith('.ai')  for n in filenames)
+def status_from_files(files):
+    """Status from a folder's .ai/.pdf file list (items are {n: name, m: modified})."""
+    has_pdf = any(f['n'].lower().endswith('.pdf') for f in files)
+    has_ai  = any(f['n'].lower().endswith('.ai')  for f in files)
     if has_pdf:
         return 'complete'
     if has_ai:
@@ -223,14 +223,17 @@ def status_from_files(filenames):
     return 'pending'
 
 def list_design_files(token, rel_path, path_root, cache):
-    """Cached list of .ai/.pdf filenames in a folder (folders are shared across cards)."""
+    """Cached list of {n: filename, m: server_modified} for .ai/.pdf files in a folder
+    (folders are shared across cards; modified date powers the app's 'misnamed file' flag)."""
     if rel_path in cache:
         return cache[rel_path]
     entries = list_folder_direct(token, f"{DBX_ROOT}/{rel_path}", path_root)
-    names = sorted(e['name'] for e in entries
-                   if e.get('.tag') == 'file' and e['name'].lower().endswith(('.ai', '.pdf')))
-    cache[rel_path] = names
-    return names
+    files = [{'n': e['name'], 'm': e.get('server_modified', '')}
+             for e in entries
+             if e.get('.tag') == 'file' and e['name'].lower().endswith(('.ai', '.pdf'))]
+    files.sort(key=lambda f: f['n'])
+    cache[rel_path] = files
+    return files
 
 # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Status logic ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 def upgrade_status(current, detected):

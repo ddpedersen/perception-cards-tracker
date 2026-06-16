@@ -855,8 +855,9 @@ function discoveredDesigns() {
   const inv = appData._files || {};
   const known = new Set(DESIGNS.map(keyName));
   const found = {};
-  Object.entries(inv).forEach(([folder, names]) => {
-    (names || []).forEach(fn => {
+  Object.entries(inv).forEach(([folder, items]) => {
+    (items || []).forEach(item => {
+      const fn = typeof item === 'string' ? item : item.n;
       let base = fn.replace(/\.(ai|pdf)$/i, '');
       const m = base.match(/\s-\s(Front|Back)$/i);
       const role = m ? m[1] : (/\.ai$/i.test(fn) ? 'AI' : 'PDF');
@@ -870,6 +871,30 @@ function discoveredDesigns() {
   });
   return Object.values(found).map(f => ({ ...f, roles: [...f.roles] }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Recently added/edited files whose name starts with a known painting/subject but
+// doesn't parse — an attempt at the key with a typo. Recency (modified date from the
+// sync) keeps the legacy pile — named long ago, never to be renamed — out of this list.
+const DISCOVERY_WINDOW_DAYS = 30;
+function misnamedFiles() {
+  const inv = appData._files || {};
+  const anchors = new Set(DESIGNS.map(d => d.artwork || d.subject || d.name));
+  const cutoff = Date.now() - DISCOVERY_WINDOW_DAYS * 86400000;
+  const out = {};
+  Object.entries(inv).forEach(([folder, items]) => {
+    (items || []).forEach(item => {
+      if (typeof item === 'string') return;           // no modified date → can't judge recency
+      const mod = item.m ? new Date(item.m).getTime() : 0;
+      if (!mod || mod < cutoff) return;               // only recently added/edited
+      const base = item.n.replace(/\.(ai|pdf)$/i, '').replace(/\s-\s(Front|Back)$/i, '');
+      const segs = base.split(' - ').map(s => s.trim());
+      if (segs.length < 2 || !anchors.has(segs[0])) return;  // not a key attempt for a known anchor
+      if (parseKeyName(base)) return;                  // it parses → fine (discovered or known)
+      out[base] = { name: base, folder, anchor: segs[0], modified: item.m };
+    });
+  });
+  return Object.values(out).sort((a, b) => (b.modified || '').localeCompare(a.modified || ''));
 }
 
 // Derived naming/consistency alerts (computed at render, never stored in flags):
@@ -1228,7 +1253,16 @@ function dashboardHTML() {
     </table>
   </div>` : '';
 
-  return tiles + discoveredSection + setSection + seriesSection + catSection;
+  const misnamed = misnamedFiles();
+  const misnamedSection = misnamed.length ? `<div class="dash-section">
+    <div class="dash-h">⚠ Files that don't match the key <span>recently added under a known painting/subject but malformed — fix the name or they won't be tracked · ${misnamed.length}</span></div>
+    <table class="rollup">
+      <thead><tr><th>File name (cleaned)</th><th>Painting / Subject</th><th>Folder</th></tr></thead>
+      <tbody>${misnamed.map(f => `<tr><td><b style="color:var(--amber)">${f.name}</b></td><td class="d-sub">${f.anchor}</td><td class="d-sub">📁 ${f.folder}</td></tr>`).join('')}</tbody>
+    </table>
+  </div>` : '';
+
+  return tiles + discoveredSection + misnamedSection + setSection + seriesSection + catSection;
 }
 
 // ─── Plan view ("what to work on next") ───────────────────────────────────────
