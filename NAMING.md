@@ -51,10 +51,11 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 | Kobe Legendary - Gold (file: "Kobe Legendary Gold") | `Kobe Shirt Pull - Legendary - Gold - of2` |
 | LeBron James - Legendary | `LeBron City Scape - Legendary` |
 | Kobe Legendary (base) | `Kobe Shirt Pull - Legendary - of10` *(if the base runs /10)* |
-| MJ in Flight - Leather GOAT 1/1 | `MJ in Flight - ?Parallel? - Leather GOAT - 1of1` ⚠ parallel TBD |
-| MJ in Flight - Angel Rare Air | `MJ in Flight - ?Parallel? - Angel Rare Air - 1of1` |
-| Black Mamba - Chrome Holographic | `Black Mamba Portrait - ?Parallel? - Chrome - of2` |
-| Black Mamba on Snake Skin (custom box) | `Black Mamba Portrait - ?Parallel? - Snake Skin - 1of1 - Box` |
+| MJ in Flight - Leather GOAT 1/1 | `MJ in Flight - Leather - 1of1` |
+| MJ in Flight - Angel Rare Air | `MJ in Flight - Angel - Rare Air - of10` |
+| MJ in Flight - "Rare Air" - Halo 1/1 | `MJ in Flight - Angel - Halo - 1of1` |
+| Black Mamba - Chrome Holographic | `Black Mamba Portrait - Holographic - Chrome - of2` |
+| Black Mamba on Snake Skin (custom box) | `Black Mamba Portrait - Snake Skin - 1of1 - Box` |
 | Court Dreams - Purple 1/1 (graded plate) | `Court Dreams - Purple - 1of1 - Plate` |
 | Soccer – William Legendary | `William - Legendary` *(or painting-style anchor if it gets one)* |
 | Kerry Wood - Bubble Gum Art | `Kerry Wood - Gum Card - of3` |
@@ -75,4 +76,4 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 
 Split the name on ` - `, then validate left to right: anchor must match a known painting or subject → parallel must be in `PARALLELS` → variant must be in that parallel's list → tier must match `1of1|ofN` → product in `{Plate, Box}`. A name that parses fills `parallel`/`variant` automatically; a name that doesn't gets a naming alert in the tracker instead of silent guessing.
 
-**Blocked on:** parallel assignments for the 8 MJ in Flight designs + the Black Mamba Portrait group. (Painting names are settled: *Kobe Shirt Pull*, *LeBron City Scape* — the Dropbox/app renames can proceed any time.)
+**Status (2026-06-16):** the parallel vocabulary is now settled — Black Mamba Portrait (Holographic: Chrome/Satin/Snake · Snake Skin) and MJ in Flight (Angel: base/Clear Air/Rare Air/Halo · Clear: Glass · Stained Glass · Space · Leather). Every design passes the key with **zero naming alerts**. Dropbox/app renames can proceed; the sync parser can then be built against this vocabulary.

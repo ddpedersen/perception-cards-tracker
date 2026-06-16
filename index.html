@@ -437,6 +437,24 @@ const PARALLELS = [
       { name:'Scoreboard',  tier:null },
       { name:'Silver Holo', tier:null },
   ]},
+  { name:'Holographic', variants:[            // Black Mamba Portrait holographic line (Derek 2026-06-16)
+      { name:'Chrome', tier:null },
+      { name:'Satin',  tier:null },
+      { name:'Snake',  tier:null },
+  ]},
+  { name:'Snake Skin', variants:[] },         // standalone 1/1 treatment — parallel only, no variant (Derek 2026-06-16)
+  // ── MJ in Flight lines (Derek 2026-06-16) ──
+  { name:'Angel', variants:[                  // base Angel has no variant; the rest are sub-treatments
+      { name:'Clear Air', tier:null },
+      { name:'Rare Air',  tier:null },
+      { name:'Halo',      tier:null },
+  ]},
+  { name:'Clear', variants:[
+      { name:'Glass', tier:null },
+  ]},
+  { name:'Stained Glass', variants:[] },      // standalone
+  { name:'Space',         variants:[] },      // standalone (concept)
+  { name:'Leather',       variants:[] },      // standalone
   // …extend as the vocabulary gets defined (variant tier:N enables mismatch alerts)
 ];
 
@@ -457,17 +475,17 @@ const DESIGNS = [
     ai:false, front:false, back:false, flags:['No .ai source file','PDF not labeled Front/Back (old format)'], appDesign:'Kobe Legendary - Scoreboard', printLimit:1, printedAuto:1 },
   { id:'kobe-legendary-silver', name:'Kobe Legendary – Silver Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Shirt Pull', parallel:'Legendary', variant:'Silver Holo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:true,  back:true,  flags:['No .ai source file','Front PDF missing "Front" in filename'], appDesign:'Kobe Legendary - Silver', printLimit:null, printedAuto:1 },
-  { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-chrome', name:'Portrait – Chrome 1of2', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', parallel:'Holographic', variant:'Chrome', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Front" – convention is one neutral-named .ai per design'], appDesign:'Black Mamba - Chrome Holographic', printLimit:2, printedAuto:2 },
   { id:'kobe-chrome-plate', name:'Portrait – Chrome 1of2 · Graded Plate', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'kobe-plastic-holo', name:'Portrait – Plastic Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-plastic-holo', name:'Portrait – Plastic Holo', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', parallel:'Holographic', variant:'Satin', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['Separate Front.ai & Back.ai (older 2-file pattern)'], appDesign:'Black Mamba - Satin Holographic', printLimit:10, printedAuto:10,
     appNameNote:'File: "Plastic Holo" / App: "Satin Holographic" – confirm same design' },
-  { id:'kobe-snake-print', name:'Portrait – Snake Print', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'kobe-snake-print', name:'Portrait – Snake Print', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', parallel:'Holographic', variant:'Snake', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:false, front:true,  back:true,  flags:['No .ai source file'], appDesign:'Black Mamba - Holographic Snake', printLimit:5, printedAuto:5,
     appNameNote:'File: "Snake Print" / App: "Holographic Snake" – confirm same design' },
-  { id:'kobe-snakeskin', name:'Portrait – Snake Skin 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'Crown Collection', signature:null, thumb:null,
+  { id:'kobe-snakeskin', name:'Portrait – Snake Skin 1of1', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', parallel:'Snake Skin', variant:null, series:'Crown Collection', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['3 .ai files (Front, Back, Plate) – consider consolidating to 1'], appDesign:'Black Mamba on Snake Skin', printLimit:1, printedAuto:0 },
   { id:'kobe-snakeskin-box', name:'Portrait – Snake Skin 1of1 · Custom Box', category:'artist-jared', subject:'Kobe Bryant', artwork:'Black Mamba Portrait', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Only unlabeled tiled PDF (box may be single-sided, confirm)'], appDesign:null, printLimit:null, printedAuto:0 },
@@ -481,22 +499,22 @@ const DESIGNS = [
     ai:true,  front:true,  back:true,  flags:['Shares folder with Jordan Portrait'], appDesign:'Dual MJ & Kobe Art Card', printLimit:50, printedAuto:50 },
   { id:'mj-portrait-gold', name:'Jordan Portrait – of1 Gold', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ Portrait', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ Portrait - SS Gold 1 of 1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-angel', name:'MJ in Flight – Angel 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Angel', variant:null, series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'Jordan Angel', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel Clear Air', series:'', signature:null, thumb:null,
+  { id:'mj-flight-clear-air', name:'MJ in Flight – Angel Clear Air', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Angel', variant:'Clear Air', series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF','Folder note says "not sure if used"'], appDesign:null, printLimit:null, printedAuto:0 },
-  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Angel Rare Air', series:'Release Day Series', signature:null, thumb:null,
+  { id:'mj-flight-rare-air', name:'MJ in Flight – Angel Rare Air 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Angel', variant:'Rare Air', series:'Release Day Series', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
-  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Clear', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Clear', variant:'Glass', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'], appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Leather GOAT', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Leather', variant:null, series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Plastic Holo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Angel', variant:'Halo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
     appNameNote:'File: "Plastic Holo" / App: "Rare Air - Halo 1/1" – confirm same design' },
-  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Stained Glass', series:'Jared Emerson Collection 2', signature:null, thumb:null,
+  { id:'mj-flight-stained', name:'MJ in Flight – Stained Glass', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Stained Glass', variant:null, series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - Stained Glass', printLimit:3, printedAuto:1 },
-  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:null, variant:'Space', series:'', signature:null, thumb:null,
+  { id:'mj-flight-space', name:'MJ in Flight – Space (Concept)', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Space', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:false, flags:['Concept only – lives in _Concept Designs folder, move when confirmed'], appDesign:null, printLimit:null, printedAuto:0 },
 
   // ── Artist Cards – Jared Emerson · Other ──
