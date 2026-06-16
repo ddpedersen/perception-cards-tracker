@@ -51,7 +51,7 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 | Kobe Legendary - Gold (file: "Kobe Legendary Gold") | `Kobe Shirt Pull - Legendary - Gold - of2` |
 | LeBron James - Legendary | `LeBron City Scape - Legendary` |
 | Kobe Legendary (base) | `Kobe Shirt Pull - Legendary - of10` *(if the base runs /10)* |
-| MJ in Flight - Leather GOAT 1/1 | `MJ in Flight - Leather - 1of1` |
+| MJ in Flight - Leather GOAT 1/1 | `MJ in Flight - Leather - GOAT - 1of1` |
 | MJ in Flight - Angel Rare Air | `MJ in Flight - Angel - Rare Air - of10` |
 | MJ in Flight - "Rare Air" - Halo 1/1 | `MJ in Flight - Angel - Halo - 1of1` |
 | Black Mamba - Chrome Holographic | `Black Mamba Portrait - Holographic - Chrome - of2` |
@@ -76,4 +76,4 @@ Adding "Michael Jordan - " in front of "MJ in Flight" would say everything twice
 
 Split the name on ` - `, then validate left to right: anchor must match a known painting or subject → parallel must be in `PARALLELS` → variant must be in that parallel's list → tier must match `1of1|ofN` → product in `{Plate, Box}`. A name that parses fills `parallel`/`variant` automatically; a name that doesn't gets a naming alert in the tracker instead of silent guessing.
 
-**Status (2026-06-16):** the parallel vocabulary is now settled — Black Mamba Portrait (Holographic: Chrome/Satin/Snake · Snake Skin) and MJ in Flight (Angel: base/Clear Air/Rare Air/Halo · Clear: Glass · Stained Glass · Space · Leather). Every design passes the key with **zero naming alerts**. Dropbox/app renames can proceed; the sync parser can then be built against this vocabulary.
+**Status (2026-06-16):** the parallel vocabulary is now settled — Black Mamba Portrait (Holographic: Chrome/Satin/Snake · Snake Skin) and MJ in Flight (Angel: base/Clear Air/Rare Air/Halo · Clear: Glass · Stained Glass · Space · Leather: GOAT). Every design passes the key with **zero naming alerts**. Dropbox/app renames can proceed; the sync parser can then be built against this vocabulary.

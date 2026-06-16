@@ -454,7 +454,7 @@ const PARALLELS = [
   ]},
   { name:'Stained Glass', variants:[] },      // standalone
   { name:'Space',         variants:[] },      // standalone (concept)
-  { name:'Leather',       variants:[] },      // standalone
+  { name:'Leather', variants:[ { name:'GOAT', tier:null } ] },
   // …extend as the vocabulary gets defined (variant tier:N enables mismatch alerts)
 ];
 
@@ -507,7 +507,7 @@ const DESIGNS = [
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Gloss', printLimit:10, printedAuto:10 },
   { id:'mj-flight-clear', name:'MJ in Flight – Clear', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Clear', variant:'Glass', series:'Jared Emerson Collection 2', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:['.ai named "Back Layout" only – may be missing Front source file'], appDesign:'MJ in Flight - Clear Glass 1/1', printLimit:1, printedAuto:1 },
-  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Leather', variant:null, series:'Jared Emerson Collection 1', signature:null, thumb:null,
+  { id:'mj-flight-leather', name:'MJ in Flight – Leather GOAT 1of1', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Leather', variant:'GOAT', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:'MJ in Flight - Leather GOAT 1/1', printLimit:1, printedAuto:1 },
   { id:'mj-flight-holo', name:'MJ in Flight – Plastic Holo', category:'artist-jared', subject:'Michael Jordan', artwork:'MJ in Flight', parallel:'Angel', variant:'Halo', series:'Jared Emerson Collection 1', signature:null, thumb:null,
     ai:true,  front:true,  back:true,  flags:[], appDesign:'MJ in Flight - "Rare Air" - Halo 1/1', printLimit:1, printedAuto:1,
