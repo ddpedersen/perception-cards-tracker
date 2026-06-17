@@ -1328,7 +1328,23 @@ function dashboardHTML() {
     </table>
   </div>` : '';
 
-  return tiles + discoveredSection + misnamedSection + setSection + seriesSection + catSection;
+  // App-design reconciliation (Phase C) — only shows when a scrape has deposited _appDesigns
+  const recon = reconcileAppDesigns();
+  const reconSection = (recon.suggested.length || recon.unmatched.length) ? `<div class="dash-section">
+    <div class="dash-h">🔗 Link app designs <span>from the latest scrape — confirm a match so series/printed fill in (prevents duplicates) · app names needn't follow the key</span></div>
+    ${recon.suggested.length ? `<table class="rollup">
+      <thead><tr><th>App design (scraped)</th><th>Best-guess tracked match</th><th class="num">Confidence</th><th></th></tr></thead>
+      <tbody>${recon.suggested.map(s => `<tr>
+        <td><b>${s.app.name}</b><div class="d-sub">${s.app.series || '—'}${s.app.printed != null ? ' · ' + s.app.printed + ' printed' : ''}</div></td>
+        <td>${s.match.design.name}<div class="d-sub">matched on ${s.match.basis}</div></td>
+        <td class="num">${s.match.score >= 0.999 ? 'exact' : Math.round(s.match.score * 100) + '%'}</td>
+        <td><button class="action-btn" onclick="linkAppDesign('${s.app.name.replace(/'/g, "\\'")}','${s.match.design.id}')">Link</button></td>
+      </tr>`).join('')}</tbody>
+    </table>` : ''}
+    ${recon.unmatched.length ? `<div class="d-sub" style="margin-top:8px">No tracked match (in the app, not tracked): ${recon.unmatched.map(u => u.name).join(', ')}</div>` : ''}
+  </div>` : '';
+
+  return tiles + discoveredSection + reconSection + misnamedSection + setSection + seriesSection + catSection;
 }
 
 // ─── Plan view ("what to work on next") ───────────────────────────────────────
@@ -1717,6 +1733,56 @@ function removeAdded(id) {
   if (!confirm('Remove this added design? It will reappear under Discovered if its files still match the key.')) return;
   appData._designs = (appData._designs || []).filter(x => x.id !== id);
   delete appData[id];
+  markDirty(); applyAddedDesigns(); renderAll();
+}
+
+// ─── Phase C: reconcile scraped web-app designs to tracked designs ──────────────
+// A scrape deposits appData._appDesigns = [{name, series, limit, printed}]. We match
+// each to a tracked design — exact on app name OR the keyed name, else a fuzzy (Dice
+// bigram) guess — and let you CONFIRM the link, so series/printed fill in and a
+// promoted file-first design isn't duplicated. App names need NOT follow the key.
+function _normName(s) { return String(s == null ? '' : s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim(); }
+function _bigrams(s) { const t = _normName(s).replace(/ /g, ''); const b = []; for (let i = 0; i < t.length - 1; i++) b.push(t.slice(i, i + 2)); return b; }
+function _dice(a, b) {
+  const A = _bigrams(a), Braw = _bigrams(b), B = Braw.slice();
+  if (!A.length || !Braw.length) return 0;
+  let m = 0; A.forEach(g => { const i = B.indexOf(g); if (i >= 0) { m++; B.splice(i, 1); } });
+  return 2 * m / (A.length + Braw.length);
+}
+function bestAppMatch(appName) {
+  let best = { design: null, basis: '', score: 0 };
+  DESIGNS.forEach(d => {
+    [[keyName(d), 'keyed name'], [d.name, 'name'], [d.appDesign, 'current app name']].forEach(([c, basis]) => {
+      if (!c) return;
+      const score = (_normName(c) === _normName(appName)) ? 1 : _dice(appName, c);
+      if (score > best.score) best = { design: d, basis, score };
+    });
+  });
+  return best;
+}
+function reconcileAppDesigns() {
+  const apps = appData._appDesigns || [];
+  const alreadyLinked = new Set(DESIGNS.filter(d => d.appDesign).map(d => _normName(d.appDesign)));
+  const suggested = [], unmatched = [];
+  apps.forEach(a => {
+    if (alreadyLinked.has(_normName(a.name))) return;          // a design already owns this app name
+    const m = bestAppMatch(a.name);
+    if (m.design && m.score >= 0.45) suggested.push({ app: a, match: m });
+    else unmatched.push(a);
+  });
+  suggested.sort((x, y) => y.match.score - x.match.score);
+  return { suggested, unmatched };
+}
+function linkAppDesign(appName, designId) {
+  const a = (appData._appDesigns || []).find(x => x.name === appName);
+  if (!a) return;
+  const d = (appData._designs || []).find(x => x.id === designId);
+  if (!d) { alert('That best guess is a built-in design (maintained in code / by the scrape), so there’s nothing to duplicate — no link needed.'); return; }
+  d.appDesign = a.name;
+  if (a.series) d.series = a.series;
+  if (a.limit != null) d.printLimit = a.limit;
+  if (a.printed != null) d.printedAuto = a.printed;
+  if (Array.isArray(d.flags)) d.flags = d.flags.filter(f => !/^Added from files/.test(f));   // it's now in the app
   markDirty(); applyAddedDesigns(); renderAll();
 }
 

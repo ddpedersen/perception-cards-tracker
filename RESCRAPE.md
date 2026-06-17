@@ -52,6 +52,14 @@ Group rows by **CARD DESIGN** (name) and pull:
 5. **Bump `APP_DATA_CAPTURED`** in `index.html` to today's date (drives the freshness badge).
 6. Show the diff for review. **Nothing is committed or pushed without approval.** Upstream data errors get *flagged*, not patched (the scrape would overwrite local edits).
 
+## Linking to file-first / promoted designs (Phase C)
+
+Designs created files-first and **promoted** in the app (Dashboard → Discovered → "+ Add to designs") live in `data.json._designs` with `appDesign: null` — not yet linked to a web-app design. To avoid duplicating them when the same card appears in the web app:
+
+- Deposit the scrape into **`data.json._appDesigns` = `[{name, series, limit, printed}]`** (in addition to / instead of hand-editing `DESIGNS`).
+- The app's **🔗 Link app designs** section (Dashboard) matches each scraped app design to a tracked design — **exact** on the app name *or* the keyed name, else a **fuzzy Dice guess** (app names need NOT follow the convention) — and you click **Link** to confirm. Linking fills `appDesign` + series + printed onto the promoted design. No duplicate.
+- Only add a scraped app design as a brand-new tracker entry if the Link UI shows **no match** for it.
+
 ## Not scraped (yet)
 - **`signature`** — not surfaced in the app on table pages yet (buried in the edit view). Deferred.
 - **`thumb`** — arrives with the app's next release; field + column already in place.
