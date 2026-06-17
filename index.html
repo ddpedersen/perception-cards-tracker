@@ -876,6 +876,27 @@ function discoveredDesigns() {
 // Recently added/edited files whose name starts with a known painting/subject but
 // doesn't parse — an attempt at the key with a typo. Recency (modified date from the
 // sync) keeps the legacy pile — named long ago, never to be renamed — out of this list.
+// Why a known-anchor name fails to parse — makes the flag actionable (new vocabulary
+// to add vs. a typo to fix). Caller guarantees segs[0] is a known anchor.
+function keyNameIssue(base) {
+  const segs = base.split(' - ').map(s => s.trim());
+  const isTier = s => /^(1of1|of\d+)$/.test(s);
+  const isProduct = s => /^(Plate|Box)$/.test(s);
+  let i = 1;
+  const P = PARALLELS.find(p => p.name === segs[i]);
+  if (!P && i < segs.length && !isTier(segs[i]) && !isProduct(segs[i]))
+    return `parallel “${segs[i]}” isn’t in the vocabulary yet — add it`;
+  if (P) {
+    i++;
+    if (i < segs.length && !P.variants.some(v => v.name === segs[i]) && !isTier(segs[i]) && !isProduct(segs[i]))
+      return `variant “${segs[i]}” isn’t listed under “${P.name}” yet — add it`;
+    if (i < segs.length && P.variants.some(v => v.name === segs[i])) i++;
+  }
+  if (i < segs.length && isTier(segs[i])) i++;
+  if (i < segs.length && isProduct(segs[i])) i++;
+  if (i < segs.length) return `unrecognized “${segs[i]}”`;
+  return 'malformed name';
+}
 const DISCOVERY_WINDOW_DAYS = 30;
 function misnamedFiles() {
   const inv = appData._files || {};
@@ -891,7 +912,7 @@ function misnamedFiles() {
       const segs = base.split(' - ').map(s => s.trim());
       if (segs.length < 2 || !anchors.has(segs[0])) return;  // not a key attempt for a known anchor
       if (parseKeyName(base)) return;                  // it parses → fine (discovered or known)
-      out[base] = { name: base, folder, anchor: segs[0], modified: item.m };
+      out[base] = { name: base, folder, anchor: segs[0], modified: item.m, reason: keyNameIssue(base) };
     });
   });
   return Object.values(out).sort((a, b) => (b.modified || '').localeCompare(a.modified || ''));
@@ -1257,8 +1278,8 @@ function dashboardHTML() {
   const misnamedSection = misnamed.length ? `<div class="dash-section">
     <div class="dash-h">⚠ Files that don't match the key <span>recently added under a known painting/subject but malformed — fix the name or they won't be tracked · ${misnamed.length}</span></div>
     <table class="rollup">
-      <thead><tr><th>File name (cleaned)</th><th>Painting / Subject</th><th>Folder</th></tr></thead>
-      <tbody>${misnamed.map(f => `<tr><td><b style="color:var(--amber)">${f.name}</b></td><td class="d-sub">${f.anchor}</td><td class="d-sub">📁 ${f.folder}</td></tr>`).join('')}</tbody>
+      <thead><tr><th>File name (cleaned)</th><th>What's wrong</th><th>Painting / Subject</th><th>Folder</th></tr></thead>
+      <tbody>${misnamed.map(f => `<tr><td><b style="color:var(--amber)">${f.name}</b></td><td style="color:var(--amber)">${f.reason}</td><td class="d-sub">${f.anchor}</td><td class="d-sub">📁 ${f.folder}</td></tr>`).join('')}</tbody>
     </table>
   </div>` : '';
 
