@@ -239,6 +239,22 @@
   .rel-issue { color: var(--amber); font-weight: 600; }
   .empty-note { font-size: 12px; color: var(--muted); font-style: italic; padding: 14px; background: var(--surface); border: 1px dashed var(--border); border-radius: 8px; }
 
+  /* Vocabulary editor */
+  .vocab-card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px; }
+  .vocab-phead { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .vocab-input { padding: 5px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 13px; outline: none; }
+  .vocab-input:focus { border-color: var(--accent); }
+  .vocab-pname { font-weight: 700; min-width: 180px; }
+  .vocab-tier { width: 66px; padding: 5px 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface2); color: var(--text); font-size: 12px; outline: none; -moz-appearance: textfield; }
+  .vocab-tier::-webkit-outer-spin-button, .vocab-tier::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .vocab-variants { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 8px; padding-left: 6px; }
+  .vocab-variant { display: flex; gap: 6px; align-items: center; }
+  .vocab-del { font-size: 11px; padding: 3px 8px; border-radius: 5px; border: 1px solid var(--border); background: transparent; color: var(--muted); cursor: pointer; }
+  .vocab-del:hover { border-color: var(--red); color: #f87171; }
+  .vocab-addrow { display: flex; gap: 6px; align-items: center; }
+  .vocab-addparallel { display: flex; gap: 6px; align-items: center; border-style: dashed; }
+  .vocab-tier-lbl { font-size: 10px; color: var(--muted); }
+
   /* Plan / matrix view */
   .plan-legend { font-size: 11px; color: var(--muted); margin-bottom: 10px; display: flex; gap: 14px; flex-wrap: wrap; align-items: center; }
   .plan-legend .pip { cursor: default; }
@@ -322,6 +338,7 @@
   <button class="view-tab" data-view="releases" onclick="setView('releases')">📦 Releases</button>
   <button class="view-tab active" data-view="table" onclick="setView('table')">📋 Designs</button>
   <button class="view-tab" data-view="grid" onclick="setView('grid')">🗂 Grid</button>
+  <button class="view-tab" data-view="vocab" onclick="setView('vocab')">🏷 Vocabulary</button>
 </div>
 
 <div class="stats-bar" id="statsBar"></div>
@@ -430,7 +447,7 @@ function templateFor(set) { return SET_TEMPLATE_OVERRIDES[set.artwork || set.sub
 // whose names lack the parallel get flagged so the upstream names get fixed.
 // Once the naming convention is final, the sync will parse well-named files and
 // fill these automatically.
-const PARALLELS = [
+const DEFAULT_PARALLELS = [
   { name:'Legendary', variants:[
       { name:'Angel',       tier:null },
       { name:'Gold',        tier:null },
@@ -459,6 +476,21 @@ const PARALLELS = [
   { name:'Leather', variants:[ { name:'GOAT', tier:null } ] },
   // …extend as the vocabulary gets defined (variant tier:N enables mismatch alerts)
 ];
+// Live vocabulary: seeded from DEFAULT_PARALLELS, replaced by appData._parallels (the
+// in-app Vocabulary editor) once data loads, then persisted via Save. Editing it goes
+// through ensureVocab() so PARALLELS and appData._parallels stay the same array.
+let PARALLELS = DEFAULT_PARALLELS;
+function applyVocab() {
+  PARALLELS = (appData && Array.isArray(appData._parallels) && appData._parallels.length)
+    ? appData._parallels : DEFAULT_PARALLELS;
+}
+function ensureVocab() {
+  if (!Array.isArray(appData._parallels) || !appData._parallels.length) {
+    appData._parallels = JSON.parse(JSON.stringify(PARALLELS));   // seed from current on first edit
+  }
+  PARALLELS = appData._parallels;
+  return PARALLELS;
+}
 
 // ─── Designs ───────────────────────────────────────────────────────────────────
 // Flat list. Each design: category(1) · subject(athlete/person) · artwork(source
@@ -1037,7 +1069,7 @@ function setReport(set) {
 }
 
 // ─── Render dispatch ──────────────────────────────────────────────────────────
-function renderAll() { renderStats(); renderView(); }
+function renderAll() { applyVocab(); renderStats(); renderView(); }
 
 function renderView() {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
@@ -1045,6 +1077,7 @@ function renderView() {
   if (view === 'dashboard') main.innerHTML = dashboardHTML();
   else if (view === 'plan') main.innerHTML = planHTML();
   else if (view === 'releases') main.innerHTML = releasesHTML();
+  else if (view === 'vocab') main.innerHTML = vocabHTML();
   else if (view === 'table') main.innerHTML = tableHTML();
   else main.innerHTML = gridHTML();
 }
@@ -1586,6 +1619,64 @@ function orphanHTML(o) {
     ${o.note ? `<div class="orphan-note">${o.note}</div>` : ''}
   </div>`;
 }
+
+// ─── Vocabulary editor (add/edit parallels & variants; persisted to data.json) ──
+function escAttr(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;'); }
+function vocabHTML() {
+  ensureVocab();   // make appData._parallels the live array while we're editing
+  const cards = PARALLELS.map((p, pi) => {
+    const variants = p.variants.map((v, vi) => `
+      <div class="vocab-variant">
+        <input class="vocab-input" value="${escAttr(v.name)}" onchange="renameVariant(${pi},${vi},this.value)">
+        <input class="vocab-tier" type="number" min="1" placeholder="tier" value="${v.tier != null ? v.tier : ''}" onchange="setVariantTier(${pi},${vi},this.value)" title="default tier (optional — powers mismatch alerts)">
+        <button class="vocab-del" onclick="deleteVariant(${pi},${vi})" title="remove variant">✕</button>
+      </div>`).join('');
+    return `<div class="vocab-card">
+      <div class="vocab-phead">
+        <input class="vocab-input vocab-pname" value="${escAttr(p.name)}" onchange="renameParallel(${pi},this.value)">
+        <span class="vocab-tier-lbl">${p.variants.length} variant(s)</span>
+        <button class="vocab-del" style="margin-left:auto" onclick="deleteParallel(${pi})" title="delete this parallel">Delete</button>
+      </div>
+      <div class="vocab-variants">${variants || '<div class="d-sub">No variants — a parallel-only line (e.g. Snake Skin).</div>'}</div>
+      <div class="vocab-addrow">
+        <input class="vocab-input" id="newvar-${pi}" placeholder="new variant name" onkeydown="if(event.key==='Enter')addVariant(${pi})">
+        <button class="action-btn" onclick="addVariant(${pi})">+ variant</button>
+      </div>
+    </div>`;
+  }).join('');
+  return `<div class="dash-section">
+    <div class="dash-h">Vocabulary <span>parallels &amp; their variants — the file-name parser validates against this · edits persist with the Save button</span></div>
+    ${cards}
+    <div class="vocab-card vocab-addparallel">
+      <input class="vocab-input" id="newparallel" placeholder="new parallel name" onkeydown="if(event.key==='Enter')addParallel()">
+      <button class="action-btn" onclick="addParallel()">+ parallel</button>
+    </div>
+    <div class="mx-sub" style="margin-top:8px">Tip: a “variant X isn't listed” flag means add X under its parallel here; “parallel Y isn't in the vocabulary” means add Y as a new parallel.</div>
+  </div>`;
+}
+function addParallel() {
+  const el = document.getElementById('newparallel'); const name = (el.value || '').trim();
+  if (!name) return;
+  const v = ensureVocab();
+  if (v.some(p => p.name.toLowerCase() === name.toLowerCase())) { alert('That parallel already exists.'); return; }
+  v.push({ name, variants: [] }); markDirty(); renderView();
+}
+function deleteParallel(pi) {
+  const v = ensureVocab();
+  if (!confirm(`Delete parallel “${v[pi].name}”? Designs using it will be flagged until reassigned.`)) return;
+  v.splice(pi, 1); markDirty(); renderView();
+}
+function renameParallel(pi, val) { val = (val || '').trim(); if (!val) return; ensureVocab()[pi].name = val; markDirty(); }
+function addVariant(pi) {
+  const el = document.getElementById('newvar-' + pi); const name = (el.value || '').trim();
+  if (!name) return;
+  const v = ensureVocab();
+  if (v[pi].variants.some(x => x.name.toLowerCase() === name.toLowerCase())) { alert('That variant already exists under this parallel.'); return; }
+  v[pi].variants.push({ name, tier: null }); markDirty(); renderView();
+}
+function deleteVariant(pi, vi) { const v = ensureVocab(); v[pi].variants.splice(vi, 1); markDirty(); renderView(); }
+function renameVariant(pi, vi, val) { val = (val || '').trim(); if (!val) return; ensureVocab()[pi].variants[vi].name = val; markDirty(); }
+function setVariantTier(pi, vi, val) { const n = parseInt(val, 10); ensureVocab()[pi].variants[vi].tier = (val === '' || isNaN(n)) ? null : n; markDirty(); }
 
 // ─── Edit handlers ────────────────────────────────────────────────────────────
 function toggleCard(id) {
