@@ -197,7 +197,236 @@
   "kid-projects": {
     "status": "pending"
   },
-  "_appDesigns": [{"name":"Betty of Ethiopia","series":"Founder's Personal Collection","limit":10,"printed":1},{"name":"Black Mamba - Chrome Holographic","series":"Jared Emerson Collection 1","limit":2,"printed":2},{"name":"Black Mamba - Holographic Snake","series":"Jared Emerson Collection 1","limit":5,"printed":5},{"name":"Black Mamba - Satin Holographic","series":"Jared Emerson Collection 1","limit":10,"printed":10},{"name":"Black Mamba on Snake Skin","series":"Crown Collection","limit":1,"printed":0},{"name":"Court Dreams - Purple 1/1","series":"Jared Emerson Collection 1","limit":1,"printed":1},{"name":"Dual MJ & Kobe Art Card","series":"Release Day Series","limit":50,"printed":50},{"name":"Dual MJ & Kobe Art Card - Gold 1/1","series":"Release Day Series","limit":1,"printed":1},{"name":"Jordan Angel","series":"Release Day Series","limit":1,"printed":1},{"name":"Joseph & Kirkley Kellahan - 1/1","series":"Founder's Personal Collection","limit":1,"printed":1},{"name":"Kerry Wood - Bubble Gum Art","series":"Founder's Personal Collection","limit":3,"printed":3},{"name":"King & Queen of our Hearts","series":"Founders Series","limit":10,"printed":1},{"name":"King of our Hearts","series":"Founders Series","limit":null,"printed":1},{"name":"Kobe Legendary - Angel","series":"Release Day Series","limit":1,"printed":1},{"name":"Kobe Legendary - Gold","series":"Jared Emerson Collection 1","limit":2,"printed":2},{"name":"Kobe Legendary - Scoreboard","series":"Jared Emerson Collection 1","limit":1,"printed":1},{"name":"Kobe Legendary - Silver","series":"Jared Emerson Collection 1","limit":null,"printed":1},{"name":"Lee Smith Holo Leather","series":"Perception Customs","limit":1,"printed":1},{"name":"Magical Emerald","series":"Founder's Personal Collection","limit":null,"printed":2},{"name":"Micro Tiger Holo Auto","series":"Micro - First On Print","limit":null,"printed":3},{"name":"MJ in Flight - \"Rare Air\" - Gloss","series":"Release Day Series","limit":10,"printed":10},{"name":"MJ in Flight - \"Rare Air\" - Halo 1/1","series":"Jared Emerson Collection 1","limit":1,"printed":1},{"name":"MJ in Flight - Clear Glass 1/1","series":"Jared Emerson Collection 2","limit":1,"printed":1},{"name":"MJ in Flight - Leather GOAT 1/1","series":"Jared Emerson Collection 1","limit":1,"printed":1},{"name":"MJ in Flight - Stained Glass","series":"Jared Emerson Collection 2","limit":3,"printed":1},{"name":"MJ Portrait - Copper","series":"Release Day Series","limit":10,"printed":10},{"name":"MJ Portrait - SS Gold 1 of 1","series":"Jared Emerson Collection 1","limit":1,"printed":1},{"name":"Mystery Card Design","series":"","limit":null,"printed":0},{"name":"Neo Leo - Holo Gold Matrix of 1","series":"Jon Caneda Collection 1","limit":1,"printed":0},{"name":"Neo Leo - Holo Gold of 2","series":"Jon Caneda Collection 1","limit":2,"printed":2},{"name":"Neo Leo - Holo of 10","series":"Jon Caneda Collection 1","limit":10,"printed":10},{"name":"Promo Card","series":"Getting Started Promo Cards","limit":null,"printed":9},{"name":"Promo Card - Signed","series":"Getting Started Promo Cards","limit":10,"printed":3},{"name":"Queen of our Hearts","series":"Founders Series","limit":null,"printed":1},{"name":"RealMotors - Project : ARES","series":"Founder's Personal Collection","limit":3,"printed":3},{"name":"SYKO Holo - Prototype","series":"Micro - Ultra Rare Prototypes","limit":null,"printed":2},{"name":"SYKO Holo Auto","series":"Micro - First On Print","limit":null,"printed":3},{"name":"Wreck It Rattebo","series":"Fantasy Football","limit":3,"printed":1}],
+  "_appDesigns": [
+    {
+      "name": "Betty of Ethiopia",
+      "series": "Founder's Personal Collection",
+      "limit": 10,
+      "printed": 1
+    },
+    {
+      "name": "Black Mamba - Chrome Holographic",
+      "series": "Jared Emerson Collection 1",
+      "limit": 2,
+      "printed": 2
+    },
+    {
+      "name": "Black Mamba - Holographic Snake",
+      "series": "Jared Emerson Collection 1",
+      "limit": 5,
+      "printed": 5
+    },
+    {
+      "name": "Black Mamba - Satin Holographic",
+      "series": "Jared Emerson Collection 1",
+      "limit": 10,
+      "printed": 10
+    },
+    {
+      "name": "Black Mamba on Snake Skin",
+      "series": "Crown Collection",
+      "limit": 1,
+      "printed": 0
+    },
+    {
+      "name": "Court Dreams - Purple 1/1",
+      "series": "Jared Emerson Collection 1",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Dual MJ & Kobe Art Card",
+      "series": "Release Day Series",
+      "limit": 50,
+      "printed": 50
+    },
+    {
+      "name": "Dual MJ & Kobe Art Card - Gold 1/1",
+      "series": "Release Day Series",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Jordan Angel",
+      "series": "Release Day Series",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Joseph & Kirkley Kellahan - 1/1",
+      "series": "Founder's Personal Collection",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Kerry Wood - Bubble Gum Art",
+      "series": "Founder's Personal Collection",
+      "limit": 3,
+      "printed": 3
+    },
+    {
+      "name": "King & Queen of our Hearts",
+      "series": "Founders Series",
+      "limit": 10,
+      "printed": 1
+    },
+    {
+      "name": "King of our Hearts",
+      "series": "Founders Series",
+      "limit": null,
+      "printed": 1
+    },
+    {
+      "name": "Kobe Legendary - Angel",
+      "series": "Release Day Series",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Kobe Legendary - Gold",
+      "series": "Jared Emerson Collection 1",
+      "limit": 2,
+      "printed": 2
+    },
+    {
+      "name": "Kobe Legendary - Scoreboard",
+      "series": "Jared Emerson Collection 1",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Kobe Legendary - Silver",
+      "series": "Jared Emerson Collection 1",
+      "limit": null,
+      "printed": 1
+    },
+    {
+      "name": "Lee Smith Holo Leather",
+      "series": "Perception Customs",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Magical Emerald",
+      "series": "Founder's Personal Collection",
+      "limit": null,
+      "printed": 2
+    },
+    {
+      "name": "Micro Tiger Holo Auto",
+      "series": "Micro - First On Print",
+      "limit": null,
+      "printed": 3
+    },
+    {
+      "name": "MJ in Flight - \"Rare Air\" - Gloss",
+      "series": "Release Day Series",
+      "limit": 10,
+      "printed": 10
+    },
+    {
+      "name": "MJ in Flight - \"Rare Air\" - Halo 1/1",
+      "series": "Jared Emerson Collection 1",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "MJ in Flight - Clear Glass 1/1",
+      "series": "Jared Emerson Collection 2",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "MJ in Flight - Leather GOAT 1/1",
+      "series": "Jared Emerson Collection 1",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "MJ in Flight - Stained Glass",
+      "series": "Jared Emerson Collection 2",
+      "limit": 3,
+      "printed": 1
+    },
+    {
+      "name": "MJ Portrait - Copper",
+      "series": "Release Day Series",
+      "limit": 10,
+      "printed": 10
+    },
+    {
+      "name": "MJ Portrait - SS Gold 1 of 1",
+      "series": "Jared Emerson Collection 1",
+      "limit": 1,
+      "printed": 1
+    },
+    {
+      "name": "Mystery Card Design",
+      "series": "",
+      "limit": null,
+      "printed": 0
+    },
+    {
+      "name": "Neo Leo - Holo Gold Matrix of 1",
+      "series": "Jon Caneda Collection 1",
+      "limit": 1,
+      "printed": 0
+    },
+    {
+      "name": "Neo Leo - Holo Gold of 2",
+      "series": "Jon Caneda Collection 1",
+      "limit": 2,
+      "printed": 2
+    },
+    {
+      "name": "Neo Leo - Holo of 10",
+      "series": "Jon Caneda Collection 1",
+      "limit": 10,
+      "printed": 10
+    },
+    {
+      "name": "Promo Card",
+      "series": "Getting Started Promo Cards",
+      "limit": null,
+      "printed": 9
+    },
+    {
+      "name": "Promo Card - Signed",
+      "series": "Getting Started Promo Cards",
+      "limit": 10,
+      "printed": 3
+    },
+    {
+      "name": "Queen of our Hearts",
+      "series": "Founders Series",
+      "limit": null,
+      "printed": 1
+    },
+    {
+      "name": "RealMotors - Project : ARES",
+      "series": "Founder's Personal Collection",
+      "limit": 3,
+      "printed": 3
+    },
+    {
+      "name": "SYKO Holo - Prototype",
+      "series": "Micro - Ultra Rare Prototypes",
+      "limit": null,
+      "printed": 2
+    },
+    {
+      "name": "SYKO Holo Auto",
+      "series": "Micro - First On Print",
+      "limit": null,
+      "printed": 3
+    },
+    {
+      "name": "Wreck It Rattebo",
+      "series": "Fantasy Football",
+      "limit": 3,
+      "printed": 1
+    }
+  ],
   "_files": {
     "Artist Cards/Jared Emerson/Kobe Bryant/Legendary": [
       {
@@ -1186,5 +1415,57 @@
       }
     ],
     "z_ Derek's Personal Projects/Kid Projects": []
+  },
+  "_designs": [
+    {
+      "id": "neoleo-holographic-gold-of2",
+      "name": "NeoLeo - Holographic - Gold - of2",
+      "category": "artist-athletic",
+      "subject": "Leonardo (NeoLeo)",
+      "artwork": "NeoLeo",
+      "parallel": "Holographic",
+      "variant": "Gold",
+      "series": "Jon Caneda Collection 1",
+      "signature": null,
+      "thumb": null,
+      "ai": true,
+      "front": true,
+      "back": true,
+      "flags": [],
+      "appDesign": "Neo Leo - Holo Gold of 2",
+      "printLimit": 2,
+      "printedAuto": 2,
+      "_added": true
+    },
+    {
+      "id": "neoleo-holographic-gold-matrix-1of1",
+      "name": "NeoLeo - Holographic - Gold Matrix - 1of1",
+      "category": "artist-athletic",
+      "subject": "Leonardo (NeoLeo)",
+      "artwork": "NeoLeo",
+      "parallel": "Holographic",
+      "variant": "Gold Matrix",
+      "series": "Jon Caneda Collection 1",
+      "signature": null,
+      "thumb": null,
+      "ai": true,
+      "front": true,
+      "back": true,
+      "flags": [],
+      "appDesign": "Neo Leo - Holo Gold Matrix of 1",
+      "printLimit": 1,
+      "printedAuto": 0,
+      "_added": true
+    }
+  ],
+  "neoleo-holographic-gold-of2": {
+    "status": "complete",
+    "notes": "",
+    "printed": null
+  },
+  "neoleo-holographic-gold-matrix-1of1": {
+    "status": "complete",
+    "notes": "",
+    "printed": null
   }
 }
