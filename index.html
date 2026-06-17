@@ -497,7 +497,7 @@ function ensureVocab() {
 // painting — artist cards only; groups designs into per-painting sets; user-
 // maintained, NOT scraped) · series(release; rolls up from the design's cards —
 // empty until scraped) · signature · thumb · file/print data.
-const DESIGNS = [
+const BASE_DESIGNS = [
   // ── Artist Cards – Jared Emerson · Kobe Bryant ──
   { id:'kobe-legendary', name:'Kobe Legendary (base)', category:'artist-jared', subject:'Kobe Bryant', artwork:'Kobe Shirt Pull', parallel:'Legendary', variant:null, series:'', signature:null, thumb:null,
     ai:true,  front:false, back:true,  flags:['Missing Front PDF'], appDesign:null, printLimit:null, printedAuto:0 },
@@ -662,6 +662,14 @@ const DESIGNS = [
   { id:'matt-empty', name:'(No designs yet)', category:'matt-personal', subject:null, series:'', signature:null, thumb:null,
     ai:false, front:false, back:false, flags:[], appDesign:null, printLimit:null, printedAuto:0 },
 ];
+// Effective design list = hardcoded BASE_DESIGNS + user-promoted designs (appData._designs,
+// Phase B). Rebuilt on load/edit so every view + the parser + discovery see promoted
+// designs (and they then leave the "Discovered" inbox, since their keyName becomes known).
+let DESIGNS = BASE_DESIGNS;
+function applyAddedDesigns() {
+  DESIGNS = (appData && Array.isArray(appData._designs) && appData._designs.length)
+    ? BASE_DESIGNS.concat(appData._designs) : BASE_DESIGNS;
+}
 
 const ORPHAN_DESIGNS = [
   { name:'Mystery Card Design',     subject:'—',               limit:null, printed:0, type:'design' },
@@ -1069,7 +1077,7 @@ function setReport(set) {
 }
 
 // ─── Render dispatch ──────────────────────────────────────────────────────────
-function renderAll() { applyVocab(); renderStats(); renderView(); }
+function renderAll() { applyAddedDesigns(); applyVocab(); renderStats(); renderView(); }
 
 function renderView() {
   document.querySelectorAll('.view-tab').forEach(t => t.classList.toggle('active', t.dataset.view === view));
@@ -1172,6 +1180,7 @@ function tableHTML() {
             ${es === 'printing' ? `<span class="d-sub">→ shows as <b style="color:#7cc4ff">Printing ${pv}/${d.printLimit}</b> until fully printed</span>` : ''}
           </div>
           <div style="margin-bottom:8px"><span class="d-sub">Convention name: </span><span class="rename-tmpl">${keyName(d)}</span><button class="copy-btn" onclick="copyText('${keyName(d).replace(/'/g, "\\'")}', this)">copy</button></div>
+          ${d._added ? `<div style="margin-bottom:8px"><span class="badge badge-inapp">added from files</span> <button class="vocab-del" onclick="removeAdded('${d.id}')">Remove added design</button></div>` : ''}
           ${issueCount(d) || d.appNameNote || d.appAlso ? `<div class="note-flags">
             ${(d.flags||[]).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
             ${namingAlerts(d).map(f => `<div class="flag">⚠ ${f}</div>`).join('')}
@@ -1298,13 +1307,14 @@ function dashboardHTML() {
   const discoveredSection = discovered.length ? `<div class="dash-section">
     <div class="dash-h">🆕 Discovered in files <span>named to the key in Dropbox but not yet a tracked design — ${discovered.length}</span></div>
     <table class="rollup">
-      <thead><tr><th>Name (from files)</th><th>Painting / Subject</th><th>Parallel › Variant</th><th class="num">Tier</th><th>Files</th></tr></thead>
+      <thead><tr><th>Name (from files)</th><th>Painting / Subject</th><th>Parallel › Variant</th><th class="num">Tier</th><th>Files</th><th></th></tr></thead>
       <tbody>${discovered.map(d => `<tr>
         <td><b>${d.name}</b><div class="d-sub">📁 ${d.folder}</div></td>
         <td class="d-sub">${d.anchor}</td>
         <td class="d-sub">${d.parallel ? d.parallel + (d.variant ? ` › ${d.variant}` : '') : '—'}</td>
         <td class="num">${d.tier || '—'}${d.product ? ' · ' + d.product : ''}</td>
         <td class="d-sub">${d.roles.join(', ') || '—'}</td>
+        <td><button class="action-btn" onclick="promoteDiscovered('${d.name.replace(/'/g, "\\'")}')">+ Add to designs</button></td>
       </tr>`).join('')}</tbody>
     </table>
   </div>` : '';
@@ -1677,6 +1687,38 @@ function addVariant(pi) {
 function deleteVariant(pi, vi) { const v = ensureVocab(); v[pi].variants.splice(vi, 1); markDirty(); renderView(); }
 function renameVariant(pi, vi, val) { val = (val || '').trim(); if (!val) return; ensureVocab()[pi].variants[vi].name = val; markDirty(); }
 function setVariantTier(pi, vi, val) { const n = parseInt(val, 10); ensureVocab()[pi].variants[vi].tier = (val === '' || isNaN(n)) ? null : n; markDirty(); }
+
+// ─── Promote a discovered file into a tracked design (Phase B) ──────────────────
+function slugId(s) { return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, ''); }
+function promoteDiscovered(name) {
+  const d = discoveredDesigns().find(x => x.name === name);
+  if (!d) return;
+  const id = slugId(d.name);
+  if (BASE_DESIGNS.some(x => x.id === id) || (appData._designs || []).some(x => x.id === id)) { alert('That design is already in the list.'); return; }
+  const ref = DESIGNS.find(x => (x.artwork || x.subject || x.name) === d.anchor);   // inherit category/subject/artwork from the anchor's existing design
+  const tier = d.tier === '1of1' ? 1 : (/^of(\d+)$/.test(d.tier || '') ? parseInt(d.tier.slice(2), 10) : null);
+  const design = {
+    id, name: d.name,
+    category: ref ? ref.category : 'artist-jared',
+    subject: ref ? ref.subject : d.anchor,
+    artwork: ref ? ref.artwork : null,
+    parallel: d.parallel || null, variant: d.variant || null,
+    series: '', signature: null, thumb: null,
+    ai: d.roles.includes('AI'), front: d.roles.includes('Front'), back: d.roles.includes('Back'),
+    flags: ['Added from files — confirm details, then create it in the printing app'],
+    appDesign: null, printLimit: tier, printedAuto: 0, _added: true
+  };
+  (appData._designs = appData._designs || []).push(design);
+  // seed a file-based status (the sync won't manage it — it's not in CARD_PATHS)
+  appData[id] = { status: (design.front || design.back) ? 'complete' : (design.ai ? 'inprogress' : 'pending'), notes: '', printed: null };
+  markDirty(); applyAddedDesigns(); renderAll();
+}
+function removeAdded(id) {
+  if (!confirm('Remove this added design? It will reappear under Discovered if its files still match the key.')) return;
+  appData._designs = (appData._designs || []).filter(x => x.id !== id);
+  delete appData[id];
+  markDirty(); applyAddedDesigns(); renderAll();
+}
 
 // ─── Edit handlers ────────────────────────────────────────────────────────────
 function toggleCard(id) {
