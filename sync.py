@@ -10,7 +10,7 @@ Rules:
   - never touches onhold or archived
 """
 
-import os, json, base64, time
+import os, json, base64, time, re
 import urllib.request, urllib.parse, urllib.error
 
 # ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Config ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
@@ -222,6 +222,13 @@ def status_from_files(files):
         return 'inprogress'
     return 'pending'
 
+def base_name(filename):
+    """Strip the extension and a trailing ' - Front'/' - Back' role from a filename,
+    leaving the keyed base name. Mirrors the app's discoveredDesigns() role-stripping."""
+    base = re.sub(r'\.(ai|pdf)$', '', filename, flags=re.IGNORECASE)
+    base = re.sub(r'\s-\s(Front|Back)$', '', base, flags=re.IGNORECASE)
+    return base
+
 def list_design_files(token, rel_path, path_root, cache):
     """Cached list of {n: filename, m: server_modified} for .ai/.pdf files in a folder
     (folders are shared across cards; modified date powers the app's 'misnamed file' flag)."""
@@ -320,6 +327,34 @@ def main():
     data['_files'] = files_payload
     if files_changed:
         print('  _files inventory changed (new/removed files detected)')
+
+    # Promoted designs (Phase B) live in data['_designs'] and are NOT in CARD_PATHS,
+    # so the main loop never touches them — their status would stay frozen at the value
+    # seeded when they were promoted. Each promoted design's 'name' IS its keyed filename
+    # base, and its file sits in a folder we already scanned, so match the name against
+    # the inventory and run it through the same upgrade logic to keep it fresh.
+    promoted = data.get('_designs') or []
+    if promoted:
+        print(f'\nChecking {len(promoted)} promoted design(s)...')
+    for design in promoted:
+        if not isinstance(design, dict):
+            continue
+        did, dname = design.get('id'), design.get('name')
+        if not did or not dname:
+            continue
+        matched = [f for files in files_payload.values() for f in files
+                   if base_name(f['n']) == dname]
+        detected = status_from_files(matched) if matched else 'pending'
+        current  = data.get(did, {}).get('status', 'pending')
+        upgraded = upgrade_status(current, detected)
+        if did not in data:
+            data[did] = {}
+        if upgraded != current:
+            data[did]['status'] = upgraded
+            changes.append((did, current, upgraded))
+            print(f'  UPGRADE  {did} (promoted): {current} -> {upgraded}')
+        else:
+            print(f'  no change {did} (promoted): {current}')
 
     if changes or files_changed:
         print(f'\nSaving {len(changes)} change(s) to GitHub...')
