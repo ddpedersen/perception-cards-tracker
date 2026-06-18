@@ -1456,6 +1456,94 @@
       "printLimit": 1,
       "printedAuto": 0,
       "_added": true
+    },
+    {
+      "id": "mj-in-flight-angel",
+      "name": "MJ in Flight - Angel",
+      "category": "artist-jared",
+      "subject": "Michael Jordan",
+      "artwork": "MJ in Flight",
+      "parallel": "Angel",
+      "variant": null,
+      "series": "",
+      "signature": null,
+      "thumb": null,
+      "ai": true,
+      "front": false,
+      "back": false,
+      "flags": [
+        "Added from files — confirm details, then create it in the printing app"
+      ],
+      "appDesign": null,
+      "printLimit": null,
+      "printedAuto": 0,
+      "_added": true
+    },
+    {
+      "id": "mj-in-flight-angel-rare-air",
+      "name": "MJ in Flight - Angel - Rare Air",
+      "category": "artist-jared",
+      "subject": "Michael Jordan",
+      "artwork": "MJ in Flight",
+      "parallel": "Angel",
+      "variant": "Rare Air",
+      "series": "",
+      "signature": null,
+      "thumb": null,
+      "ai": true,
+      "front": true,
+      "back": true,
+      "flags": [
+        "Added from files — confirm details, then create it in the printing app"
+      ],
+      "appDesign": null,
+      "printLimit": null,
+      "printedAuto": 0,
+      "_added": true
+    },
+    {
+      "id": "mj-in-flight-stained-glass",
+      "name": "MJ in Flight - Stained Glass",
+      "category": "artist-jared",
+      "subject": "Michael Jordan",
+      "artwork": "MJ in Flight",
+      "parallel": "Stained Glass",
+      "variant": null,
+      "series": "",
+      "signature": null,
+      "thumb": null,
+      "ai": true,
+      "front": true,
+      "back": true,
+      "flags": [
+        "Added from files — confirm details, then create it in the printing app"
+      ],
+      "appDesign": null,
+      "printLimit": null,
+      "printedAuto": 0,
+      "_added": true
+    },
+    {
+      "id": "mj-in-flight-clear",
+      "name": "MJ in Flight - Clear",
+      "category": "artist-jared",
+      "subject": "Michael Jordan",
+      "artwork": "MJ in Flight",
+      "parallel": "Clear",
+      "variant": null,
+      "series": "",
+      "signature": null,
+      "thumb": null,
+      "ai": false,
+      "front": true,
+      "back": true,
+      "flags": [
+        "Added from files — confirm details, then create it in the printing app"
+      ],
+      "appDesign": null,
+      "printLimit": null,
+      "printedAuto": 0,
+      "_added": true
     }
   ],
   "neoleo-holographic-gold-of2": {
@@ -1464,6 +1552,26 @@
     "printed": null
   },
   "neoleo-holographic-gold-matrix-1of1": {
+    "status": "complete",
+    "notes": "",
+    "printed": null
+  },
+  "mj-in-flight-angel": {
+    "status": "inprogress",
+    "notes": "",
+    "printed": null
+  },
+  "mj-in-flight-angel-rare-air": {
+    "status": "complete",
+    "notes": "",
+    "printed": null
+  },
+  "mj-in-flight-stained-glass": {
+    "status": "complete",
+    "notes": "",
+    "printed": null
+  },
+  "mj-in-flight-clear": {
     "status": "complete",
     "notes": "",
     "printed": null
