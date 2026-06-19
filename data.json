@@ -734,6 +734,22 @@
     ],
     "Artist Cards/Jared Emerson/Lebron James": [
       {
+        "n": "Lebron City - Legendary - 1of10.ai",
+        "m": "2026-06-19T13:32:54Z"
+      },
+      {
+        "n": "Lebron City - Legendary - Holo Sky - 1of5.ai",
+        "m": "2026-06-19T14:25:47Z"
+      },
+      {
+        "n": "Lebron City - Legendary - Holo Sky Rays - 1of3.ai",
+        "m": "2026-06-19T14:30:52Z"
+      },
+      {
+        "n": "Lebron City - Legendary - Stripe - 1of1.ai",
+        "m": "2026-06-19T13:31:48Z"
+      },
+      {
         "n": "Lebron Legendary - Front.pdf",
         "m": "2026-05-19T20:34:40Z"
       },
@@ -752,6 +768,22 @@
         "m": "2026-05-17T21:16:13Z"
       },
       {
+        "n": "Shaq Dunk - Holographic - 1of10.ai",
+        "m": "2026-06-19T13:25:05Z"
+      },
+      {
+        "n": "Shaq Dunk - Holographic - All Stars - 1of3.ai",
+        "m": "2026-06-19T13:29:59Z"
+      },
+      {
+        "n": "Shaq Dunk - Holographic - Angel - 1of1.ai",
+        "m": "2026-06-19T13:20:55Z"
+      },
+      {
+        "n": "Shaq Dunk - Holographic - Portrait - 1of5.ai",
+        "m": "2026-06-19T13:24:24Z"
+      },
+      {
         "n": "Shaq Dunk.ai",
         "m": "2026-05-17T21:16:22Z"
       }
@@ -762,11 +794,35 @@
         "m": "2026-05-19T17:46:14Z"
       },
       {
-        "n": "Hardaway Pass Card.ai",
-        "m": "2026-05-21T20:25:06Z"
+        "n": "Hardaway Slam Cover - Holographic - 10f10.ai",
+        "m": "2026-06-19T13:02:59Z"
+      },
+      {
+        "n": "Hardaway Slam Cover - Holographic - All Stars - 10f3.ai",
+        "m": "2026-06-19T13:01:55Z"
+      },
+      {
+        "n": "Hardaway Slam Cover - Holographic - Microdot - 10f1.ai",
+        "m": "2026-06-19T12:40:22Z"
+      },
+      {
+        "n": "Hardaway Slam Cover - Holographic - Synapse - 10f5.ai",
+        "m": "2026-06-19T12:34:24Z"
       }
     ],
     "Artist Cards/Jared Emerson/Dual Orlando": [
+      {
+        "n": "Dual Orlando - Holographic - 1of5.ai",
+        "m": "2026-06-19T13:13:57Z"
+      },
+      {
+        "n": "Dual Orlando - Holographic - All Stars - 1of3.ai",
+        "m": "2026-06-19T13:12:20Z"
+      },
+      {
+        "n": "Dual Orlando - Holographic - Microstars - 1of1.ai",
+        "m": "2026-06-19T13:07:57Z"
+      },
       {
         "n": "Dual Orlando Card - Front.pdf",
         "m": "2026-05-23T20:08:27Z"
@@ -1472,7 +1528,7 @@
       "front": false,
       "back": false,
       "flags": [
-        "Added from files — confirm details, then create it in the printing app"
+        "Added from files \u2014 confirm details, then create it in the printing app"
       ],
       "appDesign": null,
       "printLimit": null,
@@ -1494,7 +1550,7 @@
       "front": true,
       "back": true,
       "flags": [
-        "Added from files — confirm details, then create it in the printing app"
+        "Added from files \u2014 confirm details, then create it in the printing app"
       ],
       "appDesign": null,
       "printLimit": null,
@@ -1516,7 +1572,7 @@
       "front": true,
       "back": true,
       "flags": [
-        "Added from files — confirm details, then create it in the printing app"
+        "Added from files \u2014 confirm details, then create it in the printing app"
       ],
       "appDesign": null,
       "printLimit": null,
@@ -1538,7 +1594,7 @@
       "front": true,
       "back": true,
       "flags": [
-        "Added from files — confirm details, then create it in the printing app"
+        "Added from files \u2014 confirm details, then create it in the printing app"
       ],
       "appDesign": null,
       "printLimit": null,
