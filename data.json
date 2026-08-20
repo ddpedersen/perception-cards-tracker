@@ -84,7 +84,7 @@
     "status": "complete"
   },
   "card-backs": {
-    "status": "inprogress"
+    "status": "complete"
   },
   "neoleo": {
     "status": "complete"
@@ -862,6 +862,10 @@
       {
         "n": "Card Back Designs.ai",
         "m": "2026-05-13T15:40:57Z"
+      },
+      {
+        "n": "Certificate of Authenticity - Back Logo.pdf",
+        "m": "2026-08-19T18:23:21Z"
       },
       {
         "n": "Certificate of Authenticity Template.ai",
